@@ -10,19 +10,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Settings, 
-  Clock, 
-  MessageSquare, 
-  Mail, 
-  Phone, 
+import {
+  Settings,
+  Clock,
+  MessageSquare,
+  Mail,
+  Phone,
   MessageCircle,
   Save,
   Plus,
-  Trash2
+  Trash2,
+  CreditCard,
+  Settings2,
 } from 'lucide-react';
 import { mockMessageTemplates } from '@/data/mockData';
 import { MessageTemplate } from '@/types';
+import { PixKeysSection } from '@/components/PixKeysSection'; // Importar o novo componente
 
 export default function ConfiguracaoPage() {
   const [sendingPeriods, setSendingPeriods] = useState({
@@ -97,7 +100,7 @@ export default function ConfiguracaoPage() {
           </div>
 
           <Tabs defaultValue="periods" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="periods" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 Períodos
@@ -111,8 +114,12 @@ export default function ConfiguracaoPage() {
                 Contas
               </TabsTrigger>
               <TabsTrigger value="general" className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
+                <Settings2 className="w-4 h-4" />
                 Geral
+              </TabsTrigger>
+              <TabsTrigger value="pix-keys" className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Chaves PIX
               </TabsTrigger>
             </TabsList>
 
@@ -420,7 +427,7 @@ export default function ConfiguracaoPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="whatsappPhone">Número do WhatsApp</Label>
+                        <Label htmlFor="whatsappPhone">Número de Telefone</Label>
                         <Input
                           id="whatsappPhone"
                           value={sendingAccounts.whatsapp.phoneNumber}
@@ -503,8 +510,6 @@ export default function ConfiguracaoPage() {
                 </Card>
               </div>
             </TabsContent>
-
-            {/* Configurações Gerais */}
             <TabsContent value="general" className="space-y-6">
               <Card>
                 <CardHeader>
@@ -552,10 +557,14 @@ export default function ConfiguracaoPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Chaves PIX */}
+            <TabsContent value="pix-keys" className="space-y-6">
+              <PixKeysSection />
+            </TabsContent>
           </Tabs>
         </div>
       </DashboardLayout>
     </ProtectedRoute>
   );
 }
-
