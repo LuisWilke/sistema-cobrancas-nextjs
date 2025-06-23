@@ -113,13 +113,13 @@ export default function ConfiguracaoPage() {
                 <Mail className="w-4 h-4" />
                 Contas
               </TabsTrigger>
-              <TabsTrigger value="general" className="flex items-center gap-2">
-                <Settings2 className="w-4 h-4" />
-                Geral
-              </TabsTrigger>
               <TabsTrigger value="pix-keys" className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
                 Chaves PIX
+              </TabsTrigger>
+              <TabsTrigger value="general" className="flex items-center gap-2">
+                <Settings2 className="w-4 h-4" />
+                Geral
               </TabsTrigger>
             </TabsList>
 
