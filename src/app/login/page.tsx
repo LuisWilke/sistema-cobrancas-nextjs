@@ -57,13 +57,13 @@ export default function LoginPage() {
           </div>
           <div className="space-y-4">
             <h1 className="text-4xl font-bold text-gray-900">
-              Sistema de Cobranças
+              Régua de Cobrança
             </h1>
-            <p className="text-xl text-gray-600 max-w-md">
+            <p className="text-1xl text-gray-600 max-w-md">
               Gerencie suas cobranças de forma inteligente
             </p>
           </div>
-          <div className="w-full max-w-md h-64 bg-white/20 backdrop-blur-sm rounded-3xl shadow-xl border border-white/30">
+          <div className="w-full max-w-md h-64 bg-white/20 backdrop-blur-sm rounded-2xl shadow-xl border border-white/30 mb-14">
             {/* Decorative element */}
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md mx-auto">
           <Card className="shadow-2xl border-0">
             <CardHeader className="space-y-1 text-center">
-              <div className="lg:hidden w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="lg:hidden w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Building2 className="w-8 h-8 text-white" />
               </div>
               <CardTitle className="text-2xl font-bold">LOGO</CardTitle>
@@ -83,7 +83,7 @@ export default function LoginPage() {
             <CardContent className="space-y-4">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cnpj" className="text-sm font-medium text-green-700">
+                  <Label htmlFor="cnpj" className="text-sm font-medium">
                     CNPJ da empresa
                   </Label>
                   <Input
@@ -92,13 +92,11 @@ export default function LoginPage() {
                     placeholder="00.000.000/0000-00"
                     value={formData.cnpj}
                     onChange={(e) => handleInputChange('cnpj', e.target.value)}
-                    className="border-green-200 focus:border-green-500"
-                    required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="emailOrCpf" className="text-sm font-medium text-orange-700">
+                  <Label htmlFor="emailOrCpf" className="text-sm font-medium">
                     E-mail ou CPF
                   </Label>
                   <Input
@@ -107,13 +105,11 @@ export default function LoginPage() {
                     placeholder="seu@email.com ou 000.000.000-00"
                     value={formData.emailOrCpf}
                     onChange={(e) => handleInputChange('emailOrCpf', e.target.value)}
-                    className="border-orange-200 focus:border-orange-500"
-                    required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium text-teal-700">
+                  <Label htmlFor="password" className="text-sm font-medium">
                     Senha
                   </Label>
                   <div className="relative">
@@ -123,8 +119,6 @@ export default function LoginPage() {
                       placeholder="Digite sua senha"
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      className="border-teal-200 focus:border-teal-500 pr-10"
-                      required
                     />
                     <Button
                       type="button"
@@ -151,7 +145,7 @@ export default function LoginPage() {
                 <div className="text-center">
                   <Link 
                     href="/reset-password" 
-                    className="text-sm text-orange-600 hover:text-orange-800 underline"
+                    className="text-sm text-orange-600 hover:text-orange-600 underline"
                   >
                     Esqueci minha senha
                   </Link>
@@ -159,7 +153,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-medium"
+                  className="w-full bg-blue-600 hover:bg-blue-700 cursor-pointer text-white py-3 text-lg font-medium"
                   disabled={loading}
                 >
                   {loading ? 'Entrando...' : 'Entrar'}

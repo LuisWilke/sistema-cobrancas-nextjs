@@ -77,10 +77,10 @@ export default function ResetPasswordPage() {
             <Building2 className="w-16 h-16 text-white" />
           </div>
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900">
               Recuperar Senha
             </h1>
-            <p className="text-xl text-gray-600 max-w-md">
+            <p className="text-lg text-gray-600 max-w-md">
               Enviaremos um link de recuperação para seu e-mail
             </p>
           </div>
