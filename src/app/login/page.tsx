@@ -59,11 +59,11 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold text-gray-900">
               Régua de Cobrança
             </h1>
-            <p className="text-1xl text-gray-600 max-w-md">
+            <p className="text-1xl  text-gray-700 max-w-md">
               Gerencie suas cobranças de forma inteligente
             </p>
           </div>
-          <div className="w-full max-w-md h-64 bg-white/20 backdrop-blur-sm rounded-2xl shadow-xl border border-white/30 mb-14">
+          <div className="w-full max-w-md h-64 bg-white/20 backdrop-blur-sm rounded-2xl shadow-xl/25 border border-white/30 mb-14">
             {/* Decorative element */}
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function LoginPage() {
                 <div className="text-center">
                   <Link 
                     href="/reset-password" 
-                    className="text-sm text-orange-600 hover:text-orange-600 underline"
+                    className="text-sm font-bold text-orange-600 hover:text-orange-600 underline"
                   >
                     Esqueci minha senha
                   </Link>

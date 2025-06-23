@@ -83,7 +83,7 @@ export function PixKeysSection() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader >
         <div className="flex items-center justify-between">
           <CardTitle>Minhas Chaves PIX</CardTitle>
           <Dialog open={showAddKeyModal} onOpenChange={setShowAddKeyModal}>
