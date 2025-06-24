@@ -26,8 +26,11 @@ import {
 import { mockMessageTemplates } from '@/data/mockData';
 import { MessageTemplate } from '@/types';
 import { PixKeysSection } from '@/components/PixKeysSection'; // Importar o novo componente
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React from 'react';
 
 export default function ConfiguracaoPage() {
+  const [open, setOpen] = React.useState(false);
   const [sendingPeriods, setSendingPeriods] = useState({
     beforeDue: [3, 7, 15],
     afterDue: [1, 3, 7, 15],
@@ -35,7 +38,7 @@ export default function ConfiguracaoPage() {
   });
 
   const [templates, setTemplates] = useState<Record<string, MessageTemplate>>(mockMessageTemplates);
-  
+
   const [sendingAccounts, setSendingAccounts] = useState({
     email: {
       provider: 'SendGrid',
@@ -47,10 +50,10 @@ export default function ConfiguracaoPage() {
       apiKey: 'ACxxxxxxxxxxxxxxxx',
       phoneNumber: '+5511999999999'
     },
-    sms: {
-      provider: 'Twilio',
-      apiKey: 'ACxxxxxxxxxxxxxxxx',
-      fromNumber: '+5511999999999'
+    smtp: {
+      email: 'admin',
+      pass: '123456',
+      userMail: 'admin'
     }
   });
 
@@ -150,15 +153,47 @@ export default function ConfiguracaoPage() {
                             </Button>
                           </Badge>
                         ))}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addPeriod('beforeDue')}
-                          className="h-6"
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          Adicionar
-                        </Button>
+                        <Dialog open={open} onOpenChange={setOpen}>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Adicionar
+                            </Button>
+                          </DialogTrigger>
+
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Adicionar Período</DialogTitle>
+                              <DialogDescription>
+                                Preencha os dados para adicionar um novo período.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            {/* Aqui você coloca o conteúdo do seu dialog */}
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Quantidade de dias"
+                                className="w-full border rounded p-2"
+                              />
+                            </div>
+
+                            <DialogFooter>
+                              <Button onClick={() => {
+                                addPeriod('beforeDue');
+                                setOpen(false);
+                              }}>
+                                Salvar
+                              </Button>
+
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+
                       </div>
                     </div>
 
@@ -181,6 +216,7 @@ export default function ConfiguracaoPage() {
                             </Button>
                           </Badge>
                         ))}
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -461,47 +497,49 @@ export default function ConfiguracaoPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Phone className="w-5 h-5 text-purple-600" />
-                      Configuração de SMS
+                      <Mail className="w-5 h-5 text-purple-600" />
+                      Configuração  smtp de e-mail
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="smsProvider">Provedor</Label>
+                        <Label htmlFor="smsProvider">Email</Label>
                         <Input
                           id="smsProvider"
-                          value={sendingAccounts.sms.provider}
+                          value={sendingAccounts.smtp.email}
                           onChange={(e) => setSendingAccounts(prev => ({
                             ...prev,
-                            sms: { ...prev.sms, provider: e.target.value }
+                            smtp: { ...prev.smtp, provider: e.target.value }
                           }))}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="smsFrom">Número Remetente</Label>
+                        <Label htmlFor="smsFrom">Usuário</Label>
                         <Input
                           id="smsFrom"
-                          value={sendingAccounts.sms.fromNumber}
+                          value={sendingAccounts.smtp.userMail}
                           onChange={(e) => setSendingAccounts(prev => ({
                             ...prev,
-                            sms: { ...prev.sms, fromNumber: e.target.value }
+                            smtp: { ...prev.smtp, fromNumber: e.target.value }
                           }))}
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="smsApiKey">API Key</Label>
+                    <div className="space-y-2 w-64">
+                      <Label htmlFor="smsApiKey">Senha</Label>
+
                       <Input
                         id="smsApiKey"
                         type="password"
-                        value={sendingAccounts.sms.apiKey}
+                        value={sendingAccounts.smtp.pass}
                         onChange={(e) => setSendingAccounts(prev => ({
                           ...prev,
-                          sms: { ...prev.sms, apiKey: e.target.value }
+                          sms: { ...prev.smtp, apiKey: e.target.value }
                         }))}
                       />
                     </div>
+
                     <Button onClick={() => handleSaveAccount('sms')} size="sm">
                       <Save className="w-4 h-4 mr-2" />
                       Salvar Configuração
@@ -534,7 +572,7 @@ export default function ConfiguracaoPage() {
                       </select>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="companyLogo">Logo da Empresa</Label>
                     <Input id="companyLogo" type="file" accept="image/*" />
