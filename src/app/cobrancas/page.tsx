@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
@@ -17,22 +18,77 @@ import {
   Phone, 
   Eye,
   CheckSquare,
-  Square
+  Square,
+  Calendar,
+  Filter
 } from 'lucide-react';
 import { mockDocuments } from '@/data/mockData';
 import { Document } from '@/types';
+
+// Função para parse seguro de 'dd/MM/yyyy'
+const parseDate = (str: string) => {
+  const [day, month, year] = str.split('/');
+  return new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0);
+};
+
+// Função para calcular dias até o vencimento
+const getDaysUntilDue = (dueDate: string) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = parseDate(dueDate);
+  const diffTime = due.getTime() - today.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
 
 export default function CobrancasPage() {
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateStart, setDateStart] = useState<Date | null>(null);
+  const [dateEnd, setDateEnd] = useState<Date | null>(null);
+  const [dueDateFilter, setDueDateFilter] = useState<string>('all');
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendType, setSendType] = useState<'email' | 'whatsapp' | 'sms' | null>(null);
 
-  const filteredDocuments = documents.filter(doc =>
-    doc.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.documentNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch =
+      doc.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.documentNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const dueDateObj = parseDate(doc.dueDate);
+
+    const withinDateRange =
+      (!dateStart || dueDateObj >= dateStart) &&
+      (!dateEnd || dueDateObj <= dateEnd);
+
+    // Filtro por status de vencimento
+    const daysUntilDue = getDaysUntilDue(doc.dueDate);
+    let matchesDueDateFilter = true;
+
+    switch (dueDateFilter) {
+      case 'overdue':
+        matchesDueDateFilter = daysUntilDue < 0;
+        break;
+      case 'due_today':
+        matchesDueDateFilter = daysUntilDue === 0;
+        break;
+      case 'due_this_week':
+        matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 7;
+        break;
+      case 'due_this_month':
+        matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 30;
+        break;
+      case 'due_next_month':
+        matchesDueDateFilter = daysUntilDue > 30 && daysUntilDue <= 60;
+        break;
+      case 'all':
+      default:
+        matchesDueDateFilter = true;
+        break;
+    }
+
+    return matchesSearch && withinDateRange && matchesDueDateFilter;
+  });
 
   const handleSelectAll = () => {
     if (selectedDocuments.length === filteredDocuments.length) {
@@ -56,7 +112,6 @@ export default function CobrancasPage() {
   };
 
   const confirmSend = () => {
-    // Simular envio
     console.log(`Enviando ${sendType} para ${selectedDocuments.length} documentos`);
     setShowSendModal(false);
     setSendType(null);
@@ -85,7 +140,28 @@ export default function CobrancasPage() {
     }).format(value);
   };
 
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setDateStart(null);
+    setDateEnd(null);
+    setDueDateFilter('all');
+  };
+
   const selectedDocumentsList = documents.filter(doc => selectedDocuments.includes(doc.id));
+
+  // Estatísticas rápidas para os filtros
+  const getFilterStats = () => {
+    const overdue = documents.filter(doc => getDaysUntilDue(doc.dueDate) < 0).length;
+    const dueToday = documents.filter(doc => getDaysUntilDue(doc.dueDate) === 0).length;
+    const dueThisWeek = documents.filter(doc => {
+      const days = getDaysUntilDue(doc.dueDate);
+      return days >= 0 && days <= 7;
+    }).length;
+    
+    return { overdue, dueToday, dueThisWeek };
+  };
+
+  const stats = getFilterStats();
 
   return (
     <ProtectedRoute>
@@ -103,10 +179,62 @@ export default function CobrancasPage() {
             </Button>
           </div>
 
-          {/* Filtros e busca */}
+          {/* Estatísticas rápidas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDueDateFilter('overdue')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Vencidos</p>
+                    <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                  </div>
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <Calendar className="w-5 h-5 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDueDateFilter('due_today')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Vencem Hoje</p>
+                    <p className="text-2xl font-bold text-orange-600">{stats.dueToday}</p>
+                  </div>
+                  <div className="p-2 bg-orange-100 rounded-full">
+                    <Calendar className="w-5 h-5 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDueDateFilter('due_this_week')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Vencem esta Semana</p>
+                    <p className="text-2xl font-bold text-blue-600">{stats.dueThisWeek}</p>
+                  </div>
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filtros */}
           <Card>
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4 items-center">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="w-5 h-5" />
+                Filtros de Pesquisa
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Primeira linha de filtros */}
+              <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
@@ -116,42 +244,86 @@ export default function CobrancasPage() {
                     className="pl-10"
                   />
                 </div>
-                <Button variant="outline">Todos</Button>
+                <Select value={dueDateFilter} onValueChange={setDueDateFilter}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="Filtrar por vencimento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os documentos</SelectItem>
+                    <SelectItem value="overdue">Vencidos</SelectItem>
+                    <SelectItem value="due_today">Vencem hoje</SelectItem>
+                    <SelectItem value="due_this_week">Vencem esta semana</SelectItem>
+                    <SelectItem value="due_this_month">Vencem este mês</SelectItem>
+                    <SelectItem value="due_next_month">Vencem próximo mês</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Segunda linha de filtros - Período personalizado */}
+              <div className="flex flex-col sm:flex-row gap-2 items-center">
+                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Período personalizado:</span>
+                <Input
+                  type="date"
+                  placeholder="Data inicial"
+                  onChange={(e) =>
+                    setDateStart(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)
+                  }
+                  className="w-full sm:w-auto"
+                />
+                <span className="text-sm text-gray-500">até</span>
+                <Input
+                  type="date"
+                  placeholder="Data final"
+                  onChange={(e) =>
+                    setDateEnd(e.target.value ? new Date(e.target.value + 'T23:59:59') : null)
+                  }
+                  className="w-full sm:w-auto"
+                />
+                <Button
+                  variant="outline"
+                  onClick={clearAllFilters}
+                  className="w-full sm:w-auto"
+                >
+                  Limpar Filtros
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Ações em massa */}
           {selectedDocuments.length > 0 && (
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-700 font-medium">
-                    {selectedDocuments.length} item(s) selecionado(s)
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <span className="text-sm font-medium text-blue-800">
+                    {selectedDocuments.length} documento(s) selecionado(s)
                   </span>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={() => handleSendMessages('email')}
-                      className="bg-red-600 hover:bg-red-700"
+                      className="flex items-center gap-2"
                     >
-                      <Mail className="w-4 h-4 mr-2" />
+                      <Mail className="w-4 h-4" />
                       Enviar E-mail
                     </Button>
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={() => handleSendMessages('whatsapp')}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="flex items-center gap-2"
                     >
-                      <MessageCircle className="w-4 h-4 mr-2" />
+                      <MessageCircle className="w-4 h-4" />
                       Enviar WhatsApp
                     </Button>
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={() => handleSendMessages('sms')}
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="flex items-center gap-2"
                     >
-                      <Phone className="w-4 h-4 mr-2" />
+                      <Phone className="w-4 h-4" />
                       Enviar SMS
                     </Button>
                   </div>
@@ -160,13 +332,13 @@ export default function CobrancasPage() {
             </Card>
           )}
 
-          {/* Tabela de documentos */}
+          {/* Tabela */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Documentos a receber</span>
                 <span className="text-sm font-normal text-gray-500">
-                  {filteredDocuments.length} documentos
+                  {filteredDocuments.length} de {documents.length} documentos
                 </span>
               </CardTitle>
             </CardHeader>
@@ -218,21 +390,15 @@ export default function CobrancasPage() {
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="font-medium">
-                          {document.client.name}
-                        </TableCell>
+                        <TableCell className="font-medium">{document.client.name}</TableCell>
                         <TableCell>{document.documentNumber}</TableCell>
                         <TableCell>{document.installment}</TableCell>
                         <TableCell>{document.issueDate}</TableCell>
                         <TableCell>{document.dueDate}</TableCell>
                         <TableCell>{formatCurrency(document.value)}</TableCell>
                         <TableCell>{formatCurrency(document.interest)}</TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(document.total)}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(document.status)}
-                        </TableCell>
+                        <TableCell className="font-medium">{formatCurrency(document.total)}</TableCell>
+                        <TableCell>{getStatusBadge(document.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
                             <Button size="sm" variant="ghost" className="p-2">
@@ -257,7 +423,7 @@ export default function CobrancasPage() {
             </CardContent>
           </Card>
 
-          {/* Modal de confirmação de envio */}
+          {/* Modal envio */}
           <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
             <DialogContent>
               <DialogHeader>
@@ -265,10 +431,9 @@ export default function CobrancasPage() {
                   Envio em Massa - {sendType === 'email' ? 'E-mail' : sendType === 'whatsapp' ? 'WhatsApp' : 'SMS'}
                 </DialogTitle>
                 <DialogDescription>
-                  Confirmar envio de {sendType === 'email' ? 'E-mail' : sendType === 'whatsapp' ? 'WhatsApp' : 'SMS'} para {selectedDocuments.length} cliente(s) selecionado(s)?
+                  Confirmar envio de {sendType} para {selectedDocuments.length} cliente(s) selecionado(s)?
                 </DialogDescription>
               </DialogHeader>
-              
               <div className="space-y-4">
                 <div className="max-h-40 overflow-y-auto space-y-2">
                   {selectedDocumentsList.map((doc) => (
@@ -278,14 +443,11 @@ export default function CobrancasPage() {
                     </div>
                   ))}
                 </div>
-                
                 <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={() => setShowSendModal(false)}>
                     Cancelar
                   </Button>
-                  <Button onClick={confirmSend}>
-                    Confirmar Envio
-                  </Button>
+                  <Button onClick={confirmSend}>Confirmar Envio</Button>
                 </div>
               </div>
             </DialogContent>
@@ -295,4 +457,3 @@ export default function CobrancasPage() {
     </ProtectedRoute>
   );
 }
-

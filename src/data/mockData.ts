@@ -202,4 +202,3 @@ export const mockPIXTransactions: PIXTransaction[] = [
     status: 'pending'
   }
 ];
-
