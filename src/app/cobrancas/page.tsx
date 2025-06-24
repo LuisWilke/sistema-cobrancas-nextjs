@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { 
   Download, 
   Search, 
@@ -20,7 +21,9 @@ import {
   CheckSquare,
   Square,
   Calendar,
-  Filter
+  Filter,
+  X,
+  Send
 } from 'lucide-react';
 import { mockDocuments } from '@/data/mockData';
 import { Document } from '@/types';
@@ -49,6 +52,11 @@ export default function CobrancasPage() {
   const [dueDateFilter, setDueDateFilter] = useState<string>('all');
   const [showSendModal, setShowSendModal] = useState(false);
   const [sendType, setSendType] = useState<'email' | 'whatsapp' | 'sms' | null>(null);
+  
+  // Estados para os modais individuais
+  const [currentContactDoc, setCurrentContactDoc] = useState<Document | null>(null);
+  const [contactType, setContactType] = useState<'email' | 'whatsapp' | 'phone' | null>(null);
+  const [messageContent, setMessageContent] = useState('');
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch =
@@ -61,41 +69,26 @@ export default function CobrancasPage() {
       (!dateStart || dueDateObj >= dateStart) &&
       (!dateEnd || dueDateObj <= dateEnd);
 
-    // Filtro por status de vencimento
     const daysUntilDue = getDaysUntilDue(doc.dueDate);
     let matchesDueDateFilter = true;
 
     switch (dueDateFilter) {
-      case 'overdue':
-        matchesDueDateFilter = daysUntilDue < 0;
-        break;
-      case 'due_today':
-        matchesDueDateFilter = daysUntilDue === 0;
-        break;
-      case 'due_this_week':
-        matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 7;
-        break;
-      case 'due_this_month':
-        matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 30;
-        break;
-      case 'due_next_month':
-        matchesDueDateFilter = daysUntilDue > 30 && daysUntilDue <= 60;
-        break;
-      case 'all':
-      default:
-        matchesDueDateFilter = true;
-        break;
+      case 'overdue': matchesDueDateFilter = daysUntilDue < 0; break;
+      case 'due_today': matchesDueDateFilter = daysUntilDue === 0; break;
+      case 'due_this_week': matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 7; break;
+      case 'due_this_month': matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 30; break;
+      case 'due_next_month': matchesDueDateFilter = daysUntilDue > 30 && daysUntilDue <= 60; break;
+      case 'all': default: matchesDueDateFilter = true; break;
     }
 
     return matchesSearch && withinDateRange && matchesDueDateFilter;
   });
 
+  // Funções de seleção
   const handleSelectAll = () => {
-    if (selectedDocuments.length === filteredDocuments.length) {
-      setSelectedDocuments([]);
-    } else {
-      setSelectedDocuments(filteredDocuments.map(doc => doc.id));
-    }
+    setSelectedDocuments(prev =>
+      prev.length === filteredDocuments.length ? [] : filteredDocuments.map(doc => doc.id)
+    );
   };
 
   const handleSelectDocument = (documentId: string) => {
@@ -106,6 +99,47 @@ export default function CobrancasPage() {
     );
   };
 
+  // Funções para modais de contato
+  const openContactModal = (type: 'email' | 'whatsapp' | 'phone', doc: Document) => {
+    setCurrentContactDoc(doc);
+    setContactType(type);
+    setMessageContent(getDefaultMessage(type, doc));
+  };
+
+  const closeContactModal = () => {
+    setCurrentContactDoc(null);
+    setContactType(null);
+    setMessageContent('');
+  };
+
+  const getDefaultMessage = (type: 'email' | 'whatsapp' | 'phone', doc: Document) => {
+    const clientName = doc.client.name.split(' ')[0];
+    const dueDate = doc.dueDate;
+    const docNumber = doc.documentNumber;
+    const totalValue = formatCurrency(doc.total);
+    
+    if (type === 'email') {
+      return `Prezado(a) ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nCaso já tenha efetuado o pagamento, por favor desconsidere este e-mail.\n\nAtenciosamente,\nEquipe de Cobrança`;
+    } else if (type === 'whatsapp') {
+      return `Olá ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nClique no link para pagar: [LINK_PAGAMENTO]\n\nAtenciosamente,\nEquipe de Cobrança`;
+    }
+    return '';
+  };
+
+  const handleSendContactMessage = () => {
+    if (!currentContactDoc || !contactType) return;
+    
+    console.log(`Enviando ${contactType} para ${currentContactDoc.client.name}`, {
+      message: messageContent,
+      contact: contactType === 'email' 
+        ? currentContactDoc.client.email 
+        : currentContactDoc.client.phone
+    });
+    
+    closeContactModal();
+  };
+
+  // Funções para envio em massa
   const handleSendMessages = (type: 'email' | 'whatsapp' | 'sms') => {
     setSendType(type);
     setShowSendModal(true);
@@ -118,18 +152,14 @@ export default function CobrancasPage() {
     setSelectedDocuments([]);
   };
 
+  // Funções auxiliares
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'vencido_5_dias':
-        return <Badge variant="destructive">Vencido há 5 dias</Badge>;
-      case 'vence_hoje':
-        return <Badge className="bg-orange-500">Vence hoje</Badge>;
-      case 'vence_10_dias':
-        return <Badge className="bg-green-500">Vence em 10 dias</Badge>;
-      case 'vence_15_dias':
-        return <Badge className="bg-yellow-500">Vence em 15 dias</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
+      case 'vencido_5_dias': return <Badge variant="destructive">Vencido há 5 dias</Badge>;
+      case 'vence_hoje': return <Badge className="bg-orange-500">Vence hoje</Badge>;
+      case 'vence_10_dias': return <Badge className="bg-green-500">Vence em 10 dias</Badge>;
+      case 'vence_15_dias': return <Badge className="bg-yellow-500">Vence em 15 dias</Badge>;
+      default: return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
@@ -149,7 +179,7 @@ export default function CobrancasPage() {
 
   const selectedDocumentsList = documents.filter(doc => selectedDocuments.includes(doc.id));
 
-  // Estatísticas rápidas para os filtros
+  // Estatísticas
   const getFilterStats = () => {
     const overdue = documents.filter(doc => getDaysUntilDue(doc.dueDate) < 0).length;
     const dueToday = documents.filter(doc => getDaysUntilDue(doc.dueDate) === 0).length;
@@ -233,7 +263,6 @@ export default function CobrancasPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Primeira linha de filtros */}
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -259,31 +288,22 @@ export default function CobrancasPage() {
                 </Select>
               </div>
               
-              {/* Segunda linha de filtros - Período personalizado */}
               <div className="flex flex-col sm:flex-row gap-2 items-center">
                 <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Período personalizado:</span>
                 <Input
                   type="date"
                   placeholder="Data inicial"
-                  onChange={(e) =>
-                    setDateStart(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)
-                  }
+                  onChange={(e) => setDateStart(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)}
                   className="w-full sm:w-auto"
                 />
                 <span className="text-sm text-gray-500">até</span>
                 <Input
                   type="date"
                   placeholder="Data final"
-                  onChange={(e) =>
-                    setDateEnd(e.target.value ? new Date(e.target.value + 'T23:59:59') : null)
-                  }
+                  onChange={(e) => setDateEnd(e.target.value ? new Date(e.target.value + 'T23:59:59') : null)}
                   className="w-full sm:w-auto"
                 />
-                <Button
-                  variant="outline"
-                  onClick={clearAllFilters}
-                  className="w-full sm:w-auto"
-                >
+                <Button variant="outline" onClick={clearAllFilters} className="w-full sm:w-auto">
                   Limpar Filtros
                 </Button>
               </div>
@@ -348,12 +368,7 @@ export default function CobrancasPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={handleSelectAll}
-                          className="p-0"
-                        >
+                        <Button variant="ghost" size="sm" onClick={handleSelectAll} className="p-0">
                           {selectedDocuments.length === filteredDocuments.length && filteredDocuments.length > 0 ? (
                             <CheckSquare className="w-4 h-4" />
                           ) : (
@@ -401,16 +416,38 @@ export default function CobrancasPage() {
                         <TableCell>{getStatusBadge(document.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button size="sm" variant="ghost" className="p-2">
+                            {/* Botão de E-mail */}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="p-2 hover:bg-red-50"
+                              onClick={() => openContactModal('email', document)}
+                            >
                               <Mail className="w-4 h-4 text-red-600" />
                             </Button>
-                            <Button size="sm" variant="ghost" className="p-2">
+
+                            {/* Botão de WhatsApp */}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="p-2 hover:bg-green-50"
+                              onClick={() => openContactModal('whatsapp', document)}
+                            >
                               <MessageCircle className="w-4 h-4 text-green-600" />
                             </Button>
-                            <Button size="sm" variant="ghost" className="p-2">
+
+                            {/* Botão de Telefone */}
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              className="p-2 hover:bg-purple-50"
+                              onClick={() => openContactModal('phone', document)}
+                            >
                               <Phone className="w-4 h-4 text-purple-600" />
                             </Button>
-                            <Button size="sm" variant="ghost" className="p-2">
+
+                            {/* Botão de Visualizar */}
+                            <Button size="sm" variant="ghost" className="p-2 hover:bg-blue-50">
                               <Eye className="w-4 h-4 text-blue-600" />
                             </Button>
                           </div>
@@ -423,7 +460,101 @@ export default function CobrancasPage() {
             </CardContent>
           </Card>
 
-          {/* Modal envio */}
+          {/* Modal de Contato Individual */}
+          <Dialog open={!!contactType} onOpenChange={open => !open && closeContactModal()}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {contactType === 'email' && 'Enviar E-mail'}
+                  {contactType === 'whatsapp' && 'Enviar Mensagem por WhatsApp'}
+                  {contactType === 'phone' && 'Detalhes de Contato'}
+                </DialogTitle>
+                <DialogDescription>
+                  {currentContactDoc?.client.name}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                {(contactType === 'email' || contactType === 'whatsapp') && (
+                  <>
+                    <div>
+                      <Label>
+                        {contactType === 'email' ? 'E-mail' : 'Telefone'}
+                      </Label>
+                      <Input
+                        type={contactType === 'email' ? 'email' : 'tel'}
+                        defaultValue={
+                          contactType === 'email'
+                            ? currentContactDoc?.client.email || 'email@cliente.com'
+                            : currentContactDoc?.client.phone || '(00) 00000-0000'
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Mensagem</Label>
+                      <textarea
+                        value={messageContent}
+                        onChange={(e) => setMessageContent(e.target.value)}
+                        className="mt-1 w-full p-2 border rounded min-h-[150px]"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {contactType === 'phone' && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Telefone</Label>
+                      <p className="mt-1 text-lg font-medium">
+                        {currentContactDoc?.client.phone || '(00) 00000-0000'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label>Horário de contato preferencial</Label>
+                      <p className="mt-1">Segunda a Sexta, das 9h às 18h</p>
+                    </div>
+
+                    <div>
+                      <Label>Observações</Label>
+                      <textarea
+                        placeholder="Anote informações importantes sobre o contato..."
+                        className="mt-1 w-full p-2 border rounded min-h-[100px]"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={closeContactModal}>
+                  Cancelar
+                </Button>
+                
+                {contactType === 'phone' ? (
+                  <Button asChild>
+                    <a 
+                      href={`tel:${currentContactDoc?.client.phone?.replace(/\D/g, '') || '00000000000'}`} 
+                      onClick={closeContactModal}
+                      className="flex items-center gap-2"
+                    >
+                      <Phone className="w-4 h-4" />
+                      Ligar Agora
+                    </a>
+                  </Button>
+                ) : (
+                  <Button onClick={handleSendContactMessage} className="flex items-center gap-2">
+                    <Send className="w-4 h-4" />
+                    {contactType === 'email' ? 'Enviar E-mail' : 'Enviar WhatsApp'}
+                  </Button>
+                )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Modal de Envio em Massa */}
           <Dialog open={showSendModal} onOpenChange={setShowSendModal}>
             <DialogContent>
               <DialogHeader>
@@ -431,25 +562,32 @@ export default function CobrancasPage() {
                   Envio em Massa - {sendType === 'email' ? 'E-mail' : sendType === 'whatsapp' ? 'WhatsApp' : 'SMS'}
                 </DialogTitle>
                 <DialogDescription>
-                  Confirmar envio de {sendType} para {selectedDocuments.length} cliente(s) selecionado(s)?
+                  Confirmar envio para {selectedDocuments.length} cliente(s) selecionado(s)?
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="max-h-40 overflow-y-auto space-y-2">
-                  {selectedDocumentsList.map((doc) => (
-                    <div key={doc.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                      <span className="font-medium">{doc.client.name}</span>
-                      <span className="text-sm text-gray-600">{doc.documentNumber}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setShowSendModal(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={confirmSend}>Confirmar Envio</Button>
-                </div>
+              
+              <div className="max-h-60 overflow-y-auto space-y-2 py-4">
+                {selectedDocumentsList.map((doc) => (
+                  <div key={doc.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span className="font-medium">{doc.client.name}</span>
+                    <span className="text-sm text-gray-600">
+                      {sendType === 'email' 
+                        ? doc.client.email 
+                        : doc.client.phone}
+                    </span>
+                  </div>
+                ))}
               </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowSendModal(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={confirmSend} className="flex items-center gap-2">
+                  <Send className="w-4 h-4" />
+                  Confirmar Envio
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
