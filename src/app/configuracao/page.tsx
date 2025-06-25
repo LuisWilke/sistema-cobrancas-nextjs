@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -30,7 +31,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import React from 'react';
 
 export default function ConfiguracaoPage() {
-  const [open, setOpen] = React.useState(false);
+  const [openBeforeDueDialog, setOpenBeforeDueDialog] = React.useState(false);
+  const [openAfterDueDialog, setOpenAfterDueDialog] = React.useState(false);
+  const [newPeriodValue, setNewPeriodValue] = React.useState('');
+
   const [sendingPeriods, setSendingPeriods] = useState({
     beforeDue: [3, 7, 15],
     afterDue: [1, 3, 7, 15],
@@ -73,12 +77,17 @@ export default function ConfiguracaoPage() {
   };
 
   const addPeriod = (type: 'beforeDue' | 'afterDue') => {
-    const newPeriod = prompt(`Adicionar período (em dias):`);
-    if (newPeriod && !isNaN(Number(newPeriod))) {
+    const periodToAdd = Number(newPeriodValue);
+    if (!isNaN(periodToAdd) && periodToAdd > 0) {
       setSendingPeriods(prev => ({
         ...prev,
-        [type]: [...prev[type], Number(newPeriod)].sort((a, b) => a - b)
+        [type]: [...prev[type], periodToAdd].sort((a, b) => a - b)
       }));
+      setNewPeriodValue(''); // Clear input
+      setOpenBeforeDueDialog(false); // Close dialog
+      setOpenAfterDueDialog(false); // Close dialog
+    } else {
+      alert('Por favor, insira um número válido para o período.');
     }
   };
 
@@ -153,12 +162,13 @@ export default function ConfiguracaoPage() {
                             </Button>
                           </Badge>
                         ))}
-                        <Dialog open={open} onOpenChange={setOpen}>
+                        <Dialog open={openBeforeDueDialog} onOpenChange={setOpenBeforeDueDialog}>
                           <DialogTrigger asChild>
                             <Button
                               variant="outline"
                               size="sm"
                               className="h-6"
+                              onClick={() => setNewPeriodValue('')} // Clear input when opening
                             >
                               <Plus className="w-3 h-3 mr-1" />
                               Adicionar
@@ -167,29 +177,29 @@ export default function ConfiguracaoPage() {
 
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Adicionar Período</DialogTitle>
+                              <DialogTitle>Adicionar Período (Antes do Vencimento)</DialogTitle>
                               <DialogDescription>
-                                Preencha os dados para adicionar um novo período.
+                                Insira a quantidade de dias antes do vencimento para enviar o lembrete.
                               </DialogDescription>
                             </DialogHeader>
 
-                            {/* Aqui você coloca o conteúdo do seu dialog */}
                             <div className="space-y-2">
-                              <input
-                                type="text"
+                              <Input
+                                type="number"
                                 placeholder="Quantidade de dias"
-                                className="w-full border rounded p-2"
+                                value={newPeriodValue}
+                                onChange={(e) => setNewPeriodValue(e.target.value)}
+                                className="w-full"
                               />
                             </div>
 
                             <DialogFooter>
-                              <Button onClick={() => {
-                                addPeriod('beforeDue');
-                                setOpen(false);
-                              }}>
+                              <Button variant="outline" onClick={() => setOpenBeforeDueDialog(false)}>
+                                Cancelar
+                              </Button>
+                              <Button onClick={() => addPeriod('beforeDue')}>
                                 Salvar
                               </Button>
-
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
@@ -217,15 +227,47 @@ export default function ConfiguracaoPage() {
                           </Badge>
                         ))}
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addPeriod('afterDue')}
-                          className="h-6"
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          Adicionar
-                        </Button>
+                        <Dialog open={openAfterDueDialog} onOpenChange={setOpenAfterDueDialog}>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6"
+                              onClick={() => setNewPeriodValue('')} // Clear input when opening
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Adicionar
+                            </Button>
+                          </DialogTrigger>
+
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Adicionar Período (Após o Vencimento)</DialogTitle>
+                              <DialogDescription>
+                                Insira a quantidade de dias após o vencimento para enviar a cobrança.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="space-y-2">
+                              <Input
+                                type="number"
+                                placeholder="Quantidade de dias"
+                                value={newPeriodValue}
+                                onChange={(e) => setNewPeriodValue(e.target.value)}
+                                className="w-full"
+                              />
+                            </div>
+
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setOpenAfterDueDialog(false)}>
+                                Cancelar
+                              </Button>
+                              <Button onClick={() => addPeriod('afterDue')}>
+                                Salvar
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                     </div>
 
@@ -393,50 +435,47 @@ export default function ConfiguracaoPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Mail className="w-5 h-5 text-red-600" />
-                      Configuração de E-mail
+                      Conta de E-mail (SMTP)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="emailProvider">Provedor</Label>
-                        <Input
-                          id="emailProvider"
-                          value={sendingAccounts.email.provider}
-                          onChange={(e) => setSendingAccounts(prev => ({
-                            ...prev,
-                            email: { ...prev.email, provider: e.target.value }
-                          }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="emailFrom">E-mail Remetente</Label>
-                        <Input
-                          id="emailFrom"
-                          type="email"
-                          value={sendingAccounts.email.fromEmail}
-                          onChange={(e) => setSendingAccounts(prev => ({
-                            ...prev,
-                            email: { ...prev.email, fromEmail: e.target.value }
-                          }))}
-                        />
-                      </div>
-                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="emailApiKey">API Key</Label>
+                      <Label htmlFor="smtpEmail">E-mail</Label>
                       <Input
-                        id="emailApiKey"
-                        type="password"
-                        value={sendingAccounts.email.apiKey}
+                        id="smtpEmail"
+                        value={sendingAccounts.smtp.email}
                         onChange={(e) => setSendingAccounts(prev => ({
                           ...prev,
-                          email: { ...prev.email, apiKey: e.target.value }
+                          smtp: { ...prev.smtp, email: e.target.value }
                         }))}
                       />
                     </div>
-                    <Button onClick={() => handleSaveAccount('email')} size="sm">
+                    <div className="space-y-2">
+                      <Label htmlFor="smtpPass">Senha</Label>
+                      <Input
+                        id="smtpPass"
+                        type="password"
+                        value={sendingAccounts.smtp.pass}
+                        onChange={(e) => setSendingAccounts(prev => ({
+                          ...prev,
+                          smtp: { ...prev.smtp, pass: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="smtpUserMail">E-mail do Usuário</Label>
+                      <Input
+                        id="smtpUserMail"
+                        value={sendingAccounts.smtp.userMail}
+                        onChange={(e) => setSendingAccounts(prev => ({
+                          ...prev,
+                          smtp: { ...prev.smtp, userMail: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <Button onClick={() => handleSaveAccount('smtp')} size="sm">
                       <Save className="w-4 h-4 mr-2" />
-                      Salvar Configuração
+                      Salvar Configurações
                     </Button>
                   </CardContent>
                 </Card>
@@ -446,39 +485,25 @@ export default function ConfiguracaoPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <MessageCircle className="w-5 h-5 text-green-600" />
-                      Configuração de WhatsApp
+                      Conta de WhatsApp (Twilio)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="whatsappProvider">Provedor</Label>
-                        <Input
-                          id="whatsappProvider"
-                          value={sendingAccounts.whatsapp.provider}
-                          onChange={(e) => setSendingAccounts(prev => ({
-                            ...prev,
-                            whatsapp: { ...prev.whatsapp, provider: e.target.value }
-                          }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="whatsappPhone">Número de Telefone</Label>
-                        <Input
-                          id="whatsappPhone"
-                          value={sendingAccounts.whatsapp.phoneNumber}
-                          onChange={(e) => setSendingAccounts(prev => ({
-                            ...prev,
-                            whatsapp: { ...prev.whatsapp, phoneNumber: e.target.value }
-                          }))}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="twilioProvider">Provedor</Label>
+                      <Input
+                        id="twilioProvider"
+                        value={sendingAccounts.whatsapp.provider}
+                        onChange={(e) => setSendingAccounts(prev => ({
+                          ...prev,
+                          whatsapp: { ...prev.whatsapp, provider: e.target.value }
+                        }))}
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="whatsappApiKey">API Key</Label>
+                      <Label htmlFor="twilioApiKey">API Key</Label>
                       <Input
-                        id="whatsappApiKey"
-                        type="password"
+                        id="twilioApiKey"
                         value={sendingAccounts.whatsapp.apiKey}
                         onChange={(e) => setSendingAccounts(prev => ({
                           ...prev,
@@ -486,119 +511,44 @@ export default function ConfiguracaoPage() {
                         }))}
                       />
                     </div>
-                    <Button onClick={() => handleSaveAccount('whatsapp')} size="sm">
-                      <Save className="w-4 h-4 mr-2" />
-                      Salvar Configuração
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {/* Conta de SMS */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Mail className="w-5 h-5 text-purple-600" />
-                      Configuração  smtp de e-mail
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="smsProvider">Email</Label>
-                        <Input
-                          id="smsProvider"
-                          value={sendingAccounts.smtp.email}
-                          onChange={(e) => setSendingAccounts(prev => ({
-                            ...prev,
-                            smtp: { ...prev.smtp, provider: e.target.value }
-                          }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="smsFrom">Usuário</Label>
-                        <Input
-                          id="smsFrom"
-                          value={sendingAccounts.smtp.userMail}
-                          onChange={(e) => setSendingAccounts(prev => ({
-                            ...prev,
-                            smtp: { ...prev.smtp, fromNumber: e.target.value }
-                          }))}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2 w-64">
-                      <Label htmlFor="smsApiKey">Senha</Label>
-
+                    <div className="space-y-2">
+                      <Label htmlFor="twilioPhoneNumber">Número de Telefone</Label>
                       <Input
-                        id="smsApiKey"
-                        type="password"
-                        value={sendingAccounts.smtp.pass}
+                        id="twilioPhoneNumber"
+                        value={sendingAccounts.whatsapp.phoneNumber}
                         onChange={(e) => setSendingAccounts(prev => ({
                           ...prev,
-                          sms: { ...prev.smtp, apiKey: e.target.value }
+                          whatsapp: { ...prev.whatsapp, phoneNumber: e.target.value }
                         }))}
                       />
                     </div>
-
-                    <Button onClick={() => handleSaveAccount('sms')} size="sm">
+                    <Button onClick={() => handleSaveAccount('whatsapp')} size="sm">
                       <Save className="w-4 h-4 mr-2" />
-                      Salvar Configuração
+                      Salvar Configurações
                     </Button>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
-            <TabsContent value="general" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configurações Gerais do Sistema</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="timezone">Fuso Horário</Label>
-                      <select id="timezone" className="w-full p-2 border rounded-md">
-                        <option value="America/Sao_Paulo">América/São Paulo (GMT-3)</option>
-                        <option value="America/New_York">América/Nova York (GMT-5)</option>
-                        <option value="Europe/London">Europa/Londres (GMT+0)</option>
-                      </select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="currency">Moeda</Label>
-                      <select id="currency" className="w-full p-2 border rounded-md">
-                        <option value="BRL">Real Brasileiro (R$)</option>
-                        <option value="USD">Dólar Americano ($)</option>
-                        <option value="EUR">Euro (€)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="companyLogo">Logo da Empresa</Label>
-                    <Input id="companyLogo" type="file" accept="image/*" />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="notifications" className="rounded" />
-                    <Label htmlFor="notifications">Receber notificações por e-mail</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input type="checkbox" id="autoBackup" className="rounded" />
-                    <Label htmlFor="autoBackup">Backup automático diário</Label>
-                  </div>
-
-                  <Button className="flex items-center gap-2">
-                    <Save className="w-4 h-4" />
-                    Salvar Configurações
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* Chaves PIX */}
             <TabsContent value="pix-keys" className="space-y-6">
               <PixKeysSection />
+            </TabsContent>
+
+            {/* Configurações Gerais */}
+            <TabsContent value="general" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings2 className="w-5 h-5" />
+                    Configurações Gerais
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">Em desenvolvimento...</p>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

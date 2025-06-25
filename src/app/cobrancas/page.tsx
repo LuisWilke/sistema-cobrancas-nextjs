@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -11,12 +12,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { 
-  Download, 
-  Search, 
-  Mail, 
-  MessageCircle, 
-  Phone, 
+import {
+  Download,
+  Search,
+  Mail,
+  MessageCircle,
+  Phone,
   Eye,
   CheckSquare,
   Square,
@@ -57,6 +58,12 @@ export default function CobrancasPage() {
   const [currentContactDoc, setCurrentContactDoc] = useState<Document | null>(null);
   const [contactType, setContactType] = useState<'email' | 'whatsapp' | 'phone' | null>(null);
   const [messageContent, setMessageContent] = useState('');
+
+  // Novo estado para o modal de envio de SMS/WhatsApp/Email individual
+  const [showIndividualSendModal, setShowIndividualSendModal] = useState(false);
+  const [individualSendType, setIndividualSendType] = useState<'email' | 'whatsapp' | 'sms' | null>(null);
+  const [individualMessageContent, setIndividualMessageContent] = useState('');
+  const [individualRecipient, setIndividualRecipient] = useState('');
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch =
@@ -99,11 +106,15 @@ export default function CobrancasPage() {
     );
   };
 
-  // Funções para modais de contato
+  // Funções para modais de contato (antigo)
   const openContactModal = (type: 'email' | 'whatsapp' | 'phone', doc: Document) => {
     setCurrentContactDoc(doc);
     setContactType(type);
     setMessageContent(getDefaultMessage(type, doc));
+    // setShowIndividualSendModal(true); // Abrir o novo modal
+    // setIndividualSendType(type); // Definir o tipo de envio
+    // setIndividualMessageContent(getDefaultMessage(type, doc)); // Definir a mensagem padrão
+    // setIndividualRecipient(type === 'email' ? doc.client.email : doc.client.phone); // Definir o destinatário
   };
 
   const closeContactModal = () => {
@@ -112,7 +123,7 @@ export default function CobrancasPage() {
     setMessageContent('');
   };
 
-  const getDefaultMessage = (type: 'email' | 'whatsapp' | 'phone', doc: Document) => {
+  const getDefaultMessage = (type: 'email' | 'whatsapp' | 'sms' | 'phone', doc: Document) => {
     const clientName = doc.client.name.split(' ')[0];
     const dueDate = doc.dueDate;
     const docNumber = doc.documentNumber;
@@ -120,7 +131,7 @@ export default function CobrancasPage() {
     
     if (type === 'email') {
       return `Prezado(a) ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nCaso já tenha efetuado o pagamento, por favor desconsidere este e-mail.\n\nAtenciosamente,\nEquipe de Cobrança`;
-    } else if (type === 'whatsapp') {
+    } else if (type === 'whatsapp' || type === 'sms') {
       return `Olá ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nClique no link para pagar: [LINK_PAGAMENTO]\n\nAtenciosamente,\nEquipe de Cobrança`;
     }
     return '';
@@ -137,6 +148,33 @@ export default function CobrancasPage() {
     });
     
     closeContactModal();
+  };
+
+  // Funções para o novo modal de envio individual
+  const openIndividualSendModal = (type: 'email' | 'whatsapp' | 'sms', doc: Document) => {
+    setCurrentContactDoc(doc);
+    setIndividualSendType(type);
+    setIndividualMessageContent(getDefaultMessage(type, doc));
+    setIndividualRecipient(type === 'email' ? doc.client.email || '' : doc.client.phone || '');
+    setShowIndividualSendModal(true);
+  };
+
+  const closeIndividualSendModal = () => {
+    setShowIndividualSendModal(false);
+    setCurrentContactDoc(null);
+    setIndividualSendType(null);
+    setIndividualMessageContent('');
+    setIndividualRecipient('');
+  };
+
+  const handleIndividualSendMessage = () => {
+    if (!currentContactDoc || !individualSendType) return;
+
+    console.log(`Enviando ${individualSendType} para ${currentContactDoc.client.name}`, {
+      message: individualMessageContent,
+      recipient: individualRecipient,
+    });
+    closeIndividualSendModal();
   };
 
   // Funções para envio em massa
@@ -421,7 +459,7 @@ export default function CobrancasPage() {
                               size="sm" 
                               variant="ghost" 
                               className="p-2 hover:bg-red-50"
-                              onClick={() => openContactModal('email', document)}
+                              onClick={() => openIndividualSendModal('email', document)}
                             >
                               <Mail className="w-4 h-4 text-red-600" />
                             </Button>
@@ -431,17 +469,17 @@ export default function CobrancasPage() {
                               size="sm" 
                               variant="ghost" 
                               className="p-2 hover:bg-green-50"
-                              onClick={() => openContactModal('whatsapp', document)}
+                              onClick={() => openIndividualSendModal('whatsapp', document)}
                             >
                               <MessageCircle className="w-4 h-4 text-green-600" />
                             </Button>
 
-                            {/* Botão de Telefone */}
+                            {/* Botão de Telefone (SMS) */}
                             <Button 
                               size="sm" 
                               variant="ghost" 
                               className="p-2 hover:bg-purple-50"
-                              onClick={() => openContactModal('phone', document)}
+                              onClick={() => openIndividualSendModal('sms', document)}
                             >
                               <Phone className="w-4 h-4 text-purple-600" />
                             </Button>
@@ -460,8 +498,8 @@ export default function CobrancasPage() {
             </CardContent>
           </Card>
 
-          {/* Modal de Contato Individual */}
-          <Dialog open={!!contactType} onOpenChange={open => !open && closeContactModal()}>
+          {/* Modal de Contato Individual (Antigo - pode ser removido se o novo for suficiente) */}
+          {/* <Dialog open={!!contactType} onOpenChange={open => !open && closeContactModal()}>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>
@@ -550,6 +588,95 @@ export default function CobrancasPage() {
                     {contactType === 'email' ? 'Enviar E-mail' : 'Enviar WhatsApp'}
                   </Button>
                 )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog> */}
+
+          {/* Novo Modal de Envio Individual (SMS/WhatsApp/Email) */}
+          <Dialog open={showIndividualSendModal} onOpenChange={open => !open && closeIndividualSendModal()}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {individualSendType === 'email' && 'Enviar E-mail'}
+                  {individualSendType === 'whatsapp' && 'Enviar Mensagem por WhatsApp'}
+                  {individualSendType === 'sms' && 'Enviar SMS'}
+                </DialogTitle>
+                <DialogDescription>
+                  Envio para {currentContactDoc?.client.name}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <Label>
+                    {individualSendType === 'email' ? 'E-mail do Cliente' : 'Telefone do Cliente'}
+                  </Label>
+                  <Input
+                    type={individualSendType === 'email' ? 'email' : 'tel'}
+                    value={individualRecipient}
+                    onChange={(e) => setIndividualRecipient(e.target.value)}
+                    className="mt-1"
+                    readOnly={individualSendType !== 'sms'} // Permitir edição apenas para telefone (se for para digitar novo número)
+                  />
+                </div>
+
+                {(individualSendType === 'whatsapp' || individualSendType === 'sms') && (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="useExistingNumber"
+                      name="recipientOption"
+                      value="existing"
+                      checked={individualRecipient === currentContactDoc?.client.phone}
+                      onChange={() => setIndividualRecipient(currentContactDoc?.client.phone || '')}
+                      className="form-radio"
+                    />
+                    <Label htmlFor="useExistingNumber">Enviar para o número utilizado no momento da emissão</Label>
+                  </div>
+                )}
+
+                {(individualSendType === 'whatsapp' || individualSendType === 'sms') && (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="enterNewNumber"
+                      name="recipientOption"
+                      value="new"
+                      checked={individualRecipient !== currentContactDoc?.client.phone}
+                      onChange={() => setIndividualRecipient('')} // Limpar para digitar novo
+                      className="form-radio"
+                    />
+                    <Label htmlFor="enterNewNumber">Enviar para um novo número</Label>
+                    {individualRecipient !== currentContactDoc?.client.phone && (
+                      <Input
+                        type="tel"
+                        placeholder="Digite o novo número"
+                        value={individualRecipient}
+                        onChange={(e) => setIndividualRecipient(e.target.value)}
+                        className="flex-1"
+                      />
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <Label>Mensagem</Label>
+                  <textarea
+                    value={individualMessageContent}
+                    onChange={(e) => setIndividualMessageContent(e.target.value)}
+                    className="mt-1 w-full p-2 border rounded min-h-[150px]"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={closeIndividualSendModal}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleIndividualSendMessage} className="flex items-center gap-2">
+                  <Send className="w-4 h-4" />
+                  {individualSendType === 'email' ? 'Enviar E-mail' : individualSendType === 'whatsapp' ? 'Enviar WhatsApp' : 'Enviar SMS'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
