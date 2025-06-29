@@ -23,14 +23,22 @@ import {
   Trash2,
   CreditCard,
   Settings2,
+  ChevronsUpDownIcon,
+  CheckIcon,
 } from 'lucide-react';
 import { mockMessageTemplates } from '@/data/mockData';
 import { MessageTemplate } from '@/types';
 import { PixKeysSection } from '@/components/PixKeysSection'; // Importar o novo componente
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import React from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function ConfiguracaoPage() {
+  const [open, setOpen] = React.useState(false)
+  const [value, setValue] = React.useState("")
   const [openBeforeDueDialog, setOpenBeforeDueDialog] = React.useState(false);
   const [openAfterDueDialog, setOpenAfterDueDialog] = React.useState(false);
   const [newPeriodValue, setNewPeriodValue] = React.useState('');
@@ -40,6 +48,26 @@ export default function ConfiguracaoPage() {
     afterDue: [1, 3, 7, 15],
     onDueDate: true
   });
+
+
+  const configSSL = [
+    {
+      value: "sslNone",
+      label: "slNone",
+    },
+    {
+      value: "sslAuto",
+      label: "sslAuto",
+    },
+    {
+      value: "sslTSL",
+      label: "sslTSL",
+    },
+    {
+      value: "sslStartTSL",
+      label: "sslStartTSL",
+    },
+  ]
 
   const [templates, setTemplates] = useState<Record<string, MessageTemplate>>(mockMessageTemplates);
 
@@ -57,8 +85,17 @@ export default function ConfiguracaoPage() {
     smtp: {
       email: 'admin',
       pass: '123456',
-      userMail: 'admin'
+      userMail: 'admin',
+      porta: '352'
     }
+  });
+
+  const [companyInfo, setCompanyInfo] = useState({
+    name: 'Nome da Empresa',
+    cnpj: '00.000.000/0000-00',
+    address: 'Rua Exemplo, 123 - Cidade - UF',
+    phone: '(00) 00000-0000',
+    email: 'contato@empresa.com'
   });
 
   const handleSavePeriods = () => {
@@ -73,6 +110,11 @@ export default function ConfiguracaoPage() {
 
   const handleSaveAccount = (type: string) => {
     console.log('Salvando conta:', type, sendingAccounts[type as keyof typeof sendingAccounts]);
+    // Simular salvamento
+  };
+
+  const handleSaveCompanyInfo = () => {
+    console.log('Salvando informações da empresa:', companyInfo);
     // Simular salvamento
   };
 
@@ -438,7 +480,7 @@ export default function ConfiguracaoPage() {
                       Conta de E-mail (SMTP)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-2 gap-3 w-120">
                     <div className="space-y-2">
                       <Label htmlFor="smtpEmail">E-mail</Label>
                       <Input
@@ -463,7 +505,7 @@ export default function ConfiguracaoPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="smtpUserMail">E-mail do Usuário</Label>
+                      <Label htmlFor="smtpUserMail">Conta</Label>
                       <Input
                         id="smtpUserMail"
                         value={sendingAccounts.smtp.userMail}
@@ -473,6 +515,81 @@ export default function ConfiguracaoPage() {
                         }))}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="smtpUserMail">SMTP</Label>
+                      <Input
+                        id="smtpUserMail"
+                        value={sendingAccounts.smtp.email}
+                        onChange={(e) => setSendingAccounts(prev => ({
+                          ...prev,
+                          smtp: { ...prev.smtp, userMail: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="smtpUserMail">PORTA</Label>
+                      <Input
+                        id="smtpUserMail"
+                        value={sendingAccounts.smtp.porta}
+                        onChange={(e) => setSendingAccounts(prev => ({
+                          ...prev,
+                          smtp: { ...prev.smtp, userMail: e.target.value }
+                        }))}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-6">
+                      <div className="flex items-center gap-3">
+                        <Checkbox id="terms" />
+                        <Label htmlFor="terms">Usar SSL</Label>
+                      </div>
+                    </div>
+                    <div className='space-y-2'>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-[200px] justify-between"
+                          >
+                            {value
+                              ? configSSL.find((configSSL) => configSSL.value === value)?.label
+                              : "SSL"}
+                            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[150px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search framework..." />
+                            <CommandList>
+                              <CommandEmpty>No framework found.</CommandEmpty>
+                              <CommandGroup>
+                                {configSSL.map((configSSL) => (
+                                  <CommandItem
+                                    key={configSSL.value}
+                                    value={configSSL.value}
+                                    onSelect={(currentValue) => {
+                                      setValue(currentValue === value ? "" : currentValue)
+                                      setOpen(false)
+                                    }}
+                                  >
+                                    <CheckIcon
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        value === configSSL.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {configSSL.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+
                     <Button onClick={() => handleSaveAccount('smtp')} size="sm">
                       <Save className="w-4 h-4 mr-2" />
                       Salvar Configurações
@@ -488,7 +605,7 @@ export default function ConfiguracaoPage() {
                       Conta de WhatsApp (Twilio)
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 w-120">
                     <div className="space-y-2">
                       <Label htmlFor="twilioProvider">Provedor</Label>
                       <Input
@@ -545,8 +662,52 @@ export default function ConfiguracaoPage() {
                     Configurações Gerais
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">Em desenvolvimento...</p>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Nome da Empresa</Label>
+                    <Input
+                      id="companyName"
+                      value={companyInfo.name}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyCnpj">CNPJ</Label>
+                    <Input
+                      id="companyCnpj"
+                      value={companyInfo.cnpj}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, cnpj: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyAddress">Endereço</Label>
+                    <Input
+                      id="companyAddress"
+                      value={companyInfo.address}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, address: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyPhone">Telefone</Label>
+                    <Input
+                      id="companyPhone"
+                      value={companyInfo.phone}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, phone: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyEmail">E-mail</Label>
+                    <Input
+                      id="companyEmail"
+                      type="email"
+                      value={companyInfo.email}
+                      onChange={(e) => setCompanyInfo(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                  </div>
+                  <Button onClick={handleSaveCompanyInfo} size="sm">
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar Informações da Empresa
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
