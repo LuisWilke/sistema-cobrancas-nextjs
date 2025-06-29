@@ -65,6 +65,10 @@ export default function CobrancasPage() {
   const [individualMessageContent, setIndividualMessageContent] = useState('');
   const [individualRecipient, setIndividualRecipient] = useState('');
 
+  // Novo estado para o modal de log
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [currentLogDoc, setCurrentLogDoc] = useState<Document | null>(null);
+
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch =
       doc.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -188,6 +192,17 @@ export default function CobrancasPage() {
     setShowSendModal(false);
     setSendType(null);
     setSelectedDocuments([]);
+  };
+
+  // Funções para o modal de log
+  const openLogModal = (doc: Document) => {
+    setCurrentLogDoc(doc);
+    setShowLogModal(true);
+  };
+
+  const closeLogModal = () => {
+    setShowLogModal(false);
+    setCurrentLogDoc(null);
   };
 
   // Funções auxiliares
@@ -484,8 +499,8 @@ export default function CobrancasPage() {
                               <Phone className="w-4 h-4 text-purple-600" />
                             </Button>
 
-                            {/* Botão de Visualizar */}
-                            <Button size="sm" variant="ghost" className="p-2 hover:bg-blue-50">
+                            {/* Botão de Visualizar (Log) */}
+                            <Button size="sm" variant="ghost" className="p-2 hover:bg-blue-50" onClick={() => openLogModal(document)}>
                               <Eye className="w-4 h-4 text-blue-600" />
                             </Button>
                           </div>
@@ -497,100 +512,6 @@ export default function CobrancasPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Modal de Contato Individual (Antigo - pode ser removido se o novo for suficiente) */}
-          {/* <Dialog open={!!contactType} onOpenChange={open => !open && closeContactModal()}>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {contactType === 'email' && 'Enviar E-mail'}
-                  {contactType === 'whatsapp' && 'Enviar Mensagem por WhatsApp'}
-                  {contactType === 'phone' && 'Detalhes de Contato'}
-                </DialogTitle>
-                <DialogDescription>
-                  {currentContactDoc?.client.name}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                {(contactType === 'email' || contactType === 'whatsapp') && (
-                  <>
-                    <div>
-                      <Label>
-                        {contactType === 'email' ? 'E-mail' : 'Telefone'}
-                      </Label>
-                      <Input
-                        type={contactType === 'email' ? 'email' : 'tel'}
-                        defaultValue={
-                          contactType === 'email'
-                            ? currentContactDoc?.client.email || 'email@cliente.com'
-                            : currentContactDoc?.client.phone || '(00) 00000-0000'
-                        }
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label>Mensagem</Label>
-                      <textarea
-                        value={messageContent}
-                        onChange={(e) => setMessageContent(e.target.value)}
-                        className="mt-1 w-full p-2 border rounded min-h-[150px]"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {contactType === 'phone' && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Telefone</Label>
-                      <p className="mt-1 text-lg font-medium">
-                        {currentContactDoc?.client.phone || '(00) 00000-0000'}
-                      </p>
-                    </div>
-
-                    <div>
-                      <Label>Horário de contato preferencial</Label>
-                      <p className="mt-1">Segunda a Sexta, das 9h às 18h</p>
-                    </div>
-
-                    <div>
-                      <Label>Observações</Label>
-                      <textarea
-                        placeholder="Anote informações importantes sobre o contato..."
-                        className="mt-1 w-full p-2 border rounded min-h-[100px]"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={closeContactModal}>
-                  Cancelar
-                </Button>
-                
-                {contactType === 'phone' ? (
-                  <Button asChild>
-                    <a 
-                      href={`tel:${currentContactDoc?.client.phone?.replace(/\D/g, '') || '00000000000'}`} 
-                      onClick={closeContactModal}
-                      className="flex items-center gap-2"
-                    >
-                      <Phone className="w-4 h-4" />
-                      Ligar Agora
-                    </a>
-                  </Button>
-                ) : (
-                  <Button onClick={handleSendContactMessage} className="flex items-center gap-2">
-                    <Send className="w-4 h-4" />
-                    {contactType === 'email' ? 'Enviar E-mail' : 'Enviar WhatsApp'}
-                  </Button>
-                )}
-              </DialogFooter>
-            </DialogContent>
-          </Dialog> */}
 
           {/* Novo Modal de Envio Individual (SMS/WhatsApp/Email) */}
           <Dialog open={showIndividualSendModal} onOpenChange={open => !open && closeIndividualSendModal()}>
@@ -676,6 +597,88 @@ export default function CobrancasPage() {
                 <Button onClick={handleIndividualSendMessage} className="flex items-center gap-2">
                   <Send className="w-4 h-4" />
                   {individualSendType === 'email' ? 'Enviar E-mail' : individualSendType === 'whatsapp' ? 'Enviar WhatsApp' : 'Enviar SMS'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Modal de Log de Cobranças */}
+          <Dialog open={showLogModal} onOpenChange={open => !open && closeLogModal()}>
+            <DialogContent className="sm:max-w-[700px]">
+              <DialogHeader>
+                <DialogTitle>Dados da Cobrança</DialogTitle>
+                <DialogDescription>
+                  Log de atividades para a cobrança {currentLogDoc?.documentNumber}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>Cobrança:</strong> {currentLogDoc?.documentNumber}</p>
+                  <p><strong>Cliente:</strong> {currentLogDoc?.client.name}</p>
+                  <p><strong>Telefone:</strong> {currentLogDoc?.client.phone}</p>
+                  <p><strong>Tipo:</strong> PIX | BOLETO | CARTEIRA</p>
+                  <p>PIX copia e cola &gt;&gt; ou</p>
+                  <p>link de download do boleto &gt;&gt; ou</p>
+                  <p>Carteira: documento / parcela</p>
+                </div>
+                <div className="text-right">
+                  <p><strong>R$:</strong> {formatCurrency(currentLogDoc?.total || 0)}</p>
+                  <p><strong>CNPJ/CPF:</strong> {currentLogDoc?.client.cpfCnpj}</p>
+                  <p><strong>E-mail:</strong> {currentLogDoc?.client.email}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Histórico de Envio</h3>
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data hora</TableHead>
+                        <TableHead>Ação</TableHead>
+                        <TableHead>Agente</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {/* Mock data for log entries - replace with actual data from currentLogDoc if available */}
+                      <TableRow>
+                        <TableCell>24/01/2024 - 07:15</TableCell>
+                        <TableCell>Enviado e-mail para xxx@provedor.com</TableCell>
+                        <TableCell>auto</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>20/01/2024 - 05:15</TableCell>
+                        <TableCell>Enviado e-mail para xxx@provedor.com</TableCell>
+                        <TableCell>joana</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>19/01/2024 - 09:15</TableCell>
+                        <TableCell>Enviado whats para 55 45 9 9955 5555</TableCell>
+                        <TableCell>auto</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>17/01/2024 - 08:15</TableCell>
+                        <TableCell>Enviado whats para 55 45 9 9955 5555</TableCell>
+                        <TableCell>maria</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <h3 className="text-lg font-semibold">Anotações</h3>
+                <textarea
+                  className="w-full p-2 border rounded min-h-[100px]"
+                  placeholder="Adicione anotações sobre esta cobrança..."
+                ></textarea>
+                <Button className="float-right">
+                  Gravar anotações
+                </Button>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={closeLogModal}>
+                  Fechar
                 </Button>
               </DialogFooter>
             </DialogContent>
