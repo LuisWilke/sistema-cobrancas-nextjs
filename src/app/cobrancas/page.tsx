@@ -585,7 +585,7 @@ export default function CobrancasPage() {
                   <textarea
                     value={individualMessageContent}
                     onChange={(e) => setIndividualMessageContent(e.target.value)}
-                    className="mt-1 w-full p-2 border rounded min-h-[150px]"
+                    className="mt-1 w-full p-2 border rounded min-h-[250px]"
                   />
                 </div>
               </div>
