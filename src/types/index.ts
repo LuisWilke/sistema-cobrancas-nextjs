@@ -4,7 +4,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  company: Company;
+  company?: Company;
 }
 
 export interface Company {
@@ -127,9 +127,15 @@ export interface PIXTransaction {
 }
 
 export interface AuthCredentials {
-  cnpj: string;
-  emailOrCpf: string;
-  password: string;
+  email: string;
+  senha: string;
+}
+
+export interface RegisterCredentials {
+  nome: string;
+  email: string;
+  senha: string;
+  cpf_usuario?: string;
 }
 
 export interface ResetPasswordRequest {

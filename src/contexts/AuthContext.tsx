@@ -1,14 +1,17 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthCredentials } from '@/types';
+import { User, AuthCredentials, RegisterCredentials } from '@/types';
+import { api, ApiError } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (credentials: AuthCredentials) => Promise<boolean>;
+  register: (userData: RegisterCredentials) => Promise<boolean>;
   logout: () => void;
   loading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,50 +19,103 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verificar se há um usuário logado no localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    // Verificar se há um token válido no localStorage
+    const token = localStorage.getItem('token');
+    if (token) {
+      verifyToken();
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
+  const verifyToken = async () => {
+    try {
+      const response = await api.verifyToken();
+      if (response.valido) {
+        setUser({
+          id: response.usuario.id.toString(),
+          name: response.usuario.nome,
+          email: response.usuario.email,
+        });
+      } else {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    } catch (error) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (credentials: AuthCredentials): Promise<boolean> => {
     setLoading(true);
+    setError(null);
     
-    // Simulação de autenticação
-    if (
-      credentials.cnpj === '12.345.678/0001-90' &&
-      credentials.emailOrCpf === 'admin@empresa.com' &&
-      credentials.password === '123456'
-    ) {
-      const mockUser: User = {
-        id: '1',
-        name: 'Maria Valentina',
-        email: 'admin@empresa.com',
-        company: {
-          id: '1',
-          cnpj: '12.435.974/0001-74',
-          name: 'HMC Serviços LTDA',
-          email: 'contato@hmcservicos.com',
-          phone: '(11) 99999-9999'
-        }
+    try {
+      const response = await api.login(credentials);
+      
+      const userData: User = {
+        id: response.usuario.id.toString(),
+        name: response.usuario.nome,
+        email: response.usuario.email,
       };
       
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(userData);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
       setLoading(false);
       return true;
+    } catch (error) {
+      setLoading(false);
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError('Erro ao fazer login. Tente novamente.');
+      }
+      return false;
     }
+  };
+
+  const register = async (userData: RegisterCredentials): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
     
-    setLoading(false);
-    return false;
+    try {
+      const response = await api.register(userData);
+      
+      const user: User = {
+        id: response.usuario.id.toString(),
+        name: response.usuario.nome,
+        email: response.usuario.email,
+      };
+      
+      setUser(user);
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      setLoading(false);
+      return true;
+    } catch (error) {
+      setLoading(false);
+      if (error instanceof ApiError) {
+        setError(error.message);
+      } else {
+        setError('Erro ao criar conta. Tente novamente.');
+      }
+      return false;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    setError(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
 
@@ -67,8 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     login,
+    register,
     logout,
-    loading
+    loading,
+    error
   };
 
   return (

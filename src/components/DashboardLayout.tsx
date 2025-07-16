@@ -130,7 +130,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 Olá, {user?.name}
               </h2>
               <p className="text-sm text-gray-600">
-                Empresa Logada: {user?.company.name} - {user?.company.cnpj}
+                Empresa Logada: {user?.company?.name || 'N/A'} - {user?.company?.cnpj || 'N/A'}
               </p>
             </div>
           </div>
