@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthCredentials, RegisterCredentials } from '@/types';
+import { User, AuthCredentials, RegisterCredentials } from '@/types/index';
 import { api, ApiError } from '@/lib/api';
 
 interface AuthContextType {
@@ -12,6 +12,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   error: string | null;
+  registro: (dados: RegisterCredentials) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -119,6 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
   };
 
+  const registro = async (dados: RegisterCredentials): Promise<void> => {
+    // Implementação fictícia, ajuste conforme necessário
+    await register(dados);
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -126,7 +132,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     loading,
-    error
+    error,
+    registro
   };
 
   return (

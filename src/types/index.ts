@@ -1,39 +1,99 @@
-// Tipos para o sistema de gestão de cobranças
+// Tipos para o sistema de gestão de cobranças - Adaptado para esquema m2
 
-export interface User {
-  id: string;
-  name: string;
+export interface Usuario {
+  id: number;
   email: string;
-  company?: Company;
+  nome: string;
+  cpf_usuario?: string;
+  celular?: string;
+  data_nascimento?: string;
+  gid_empresa: number;
+  cnpj_empresa?: string;
+  created_at?: string;
+  empresa?: Empresa;
 }
 
-export interface Company {
-  id: string;
-  cnpj: string;
-  name: string;
+export interface Empresa {
+  id: number;
+  cnpj_empresa: string;
+  nome_empresa: string;
+  razao_social?: string;
+  obs?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LoginData {
   email: string;
-  phone: string;
+  senha: string;
 }
 
-export interface Document {
-  id: string;
-  client: Client;
-  documentNumber: string;
-  installment: string;
-  issueDate: string;
-  dueDate: string;
-  value: number;
-  interest: number;
-  total: number;
-  status: DocumentStatus;
+export interface RegistroData {
+  nome: string;
+  email: string;
+  senha: string;
+  confirmarSenha: string;
+  cpf_usuario?: string;
+  celular?: string;
+  data_nascimento?: string;
+  gid_empresa: number;
+  cnpj_empresa?: string;
 }
 
-export interface Client {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  cpfCnpj: string;
+export interface AuthResponse {
+  mensagem: string;
+  token: string;
+  usuario: Usuario;
+}
+
+export interface ApiError {
+  erro: string;
+}
+
+export interface AuthContextType {
+  user: Usuario | null;
+  token: string | null;
+  login: (email: string, senha: string) => Promise<void>;
+  registro: (dados: RegistroData) => Promise<void>;
+  logout: () => void;
+  loading: boolean;
+}
+
+// Tipos existentes do sistema (mantidos para compatibilidade)
+export interface Cliente {
+  id: number;
+  nome: string;
+  email: string;
+  telefone: string;
+  cpf: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  dataCadastro: string;
+  status: 'ativo' | 'inativo';
+}
+
+export interface Cobranca {
+  id: number;
+  clienteId: number;
+  cliente: Cliente;
+  valor: number;
+  descricao: string;
+  dataVencimento: string;
+  dataCriacao: string;
+  status: 'pendente' | 'paga' | 'vencida' | 'cancelada';
+  metodoPagamento?: string;
+  observacoes?: string;
+}
+
+export interface DashboardStats {
+  totalClientes: number;
+  totalCobrancas: number;
+  valorTotal: number;
+  cobrancasPendentes: number;
+  cobrancasVencidas: number;
+  cobrancasPagas: number;
 }
 
 export interface PixTransaction {
@@ -53,122 +113,3 @@ export interface PixTransaction {
   boletoLink: string;
   walletInfo: string;
 }
-
-export type DocumentStatus = 
-  | 'vencido_5_dias'
-  | 'vence_hoje'
-  | 'vence_10_dias'
-  | 'vence_15_dias'
-  | 'pago';
-
-export interface DashboardMetrics {
-  overdue: {
-    value: number;
-    clients: number;
-  };
-  dueIn2Days: {
-    value: number;
-    clients: number;
-  };
-  dueIn3To10Days: {
-    value: number;
-    clients: number;
-  };
-  dueOver10Days: {
-    value: number;
-    clients: number;
-  };
-  totalOverdue: {
-    value: number;
-    clients: number;
-  };
-  dueTodayTotal: {
-    value: number;
-    clients: number;
-  };
-  totalDue: {
-    value: number;
-    clients: number;
-  };
-  totalReceivable: {
-    value: number;
-    clients: number;
-  };
-}
-
-export interface MessageTemplate {
-  id: string;
-  type: 'email' | 'whatsapp' | 'sms';
-  subject?: string;
-  content: string;
-  variables: string[];
-}
-
-export interface SendMessageRequest {
-  documentIds: string[];
-  type: 'email' | 'whatsapp' | 'sms';
-  template?: MessageTemplate;
-}
-
-export interface PIXKey {
-  id: string;
-  type: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random';
-  value: string;
-  active: boolean;
-}
-
-export interface PIXTransaction {
-  id: string;
-  documentId: string;
-  value: number;
-  date: string;
-  status: 'pending' | 'completed' | 'failed';
-  qrCode?: string;
-}
-
-export interface AuthCredentials {
-  email: string;
-  senha: string;
-}
-
-export interface RegisterCredentials {
-  nome: string;
-  email: string;
-  senha: string;
-  cpf_usuario?: string;
-}
-
-export interface ResetPasswordRequest {
-  emailOrCpf: string;
-}
-
-export interface ConfigurationSettings {
-  sendingPeriods: {
-    beforeDue: number[];
-    afterDue: number[];
-    onDueDate: boolean;
-  };
-  messageTemplates: {
-    email: MessageTemplate;
-    whatsapp: MessageTemplate;
-    sms: MessageTemplate;
-  };
-  sendingAccounts: {
-    email: {
-      provider: string;
-      apiKey: string;
-      fromEmail: string;
-    };
-    whatsapp: {
-      provider: string;
-      apiKey: string;
-      phoneNumber: string;
-    };
-    sms: {
-      provider: string;
-      apiKey: string;
-      fromNumber: string;
-    };
-  };
-}
-

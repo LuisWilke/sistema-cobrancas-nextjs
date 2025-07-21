@@ -22,7 +22,7 @@ import {
   Eye
 } from 'lucide-react';
 import { mockPixTransactions } from '@/data/mockPixTransactions';
-import { PixTransaction } from '@/types';
+import { PixTransaction } from '@/types/index';
 
 export default function GestaoPixPage() {
   const [transactions, setTransactions] = useState<PixTransaction[]>(mockPixTransactions);
