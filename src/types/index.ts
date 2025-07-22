@@ -1,5 +1,3 @@
-// Tipos para o sistema de gestão de cobranças - Adaptado para esquema m2
-
 export interface Usuario {
   id: number;
   email: string;
@@ -7,7 +5,7 @@ export interface Usuario {
   cpf_usuario?: string;
   celular?: string;
   data_nascimento?: string;
-  gid_empresa: number;
+  gid_empresa?: number;
   cnpj_empresa?: string;
   ativo?: boolean;
   created_at?: string;
@@ -25,6 +23,7 @@ export interface Empresa {
   updated_at?: string;
 }
 
+// Tipos para autenticação - CORRIGIDOS
 export interface AuthCredentials {
   email: string;
   senha: string;
@@ -37,10 +36,10 @@ export interface RegisterCredentials {
   cpf_usuario?: string;
   celular?: string;
   data_nascimento?: string;
-  gid_empresa: number;
   cnpj_empresa?: string;
 }
 
+// Tipo para o contexto de usuário (simplificado)
 export interface User {
   id: string;
   name: string;
@@ -50,47 +49,15 @@ export interface User {
 export interface AuthResponse {
   mensagem: string;
   token: string;
-  usuario: Usuario;
+  usuario: {
+    id: number;
+    nome: string;
+    email: string;
+  };
 }
 
 export interface ApiError {
   erro: string;
-}
-
-export interface LoginData {
-  email: string;
-  senha: string;
-}
-
-export interface RegistroData {
-  nome: string;
-  email: string;
-  senha: string;
-  confirmarSenha: string;
-  cpf_usuario?: string;
-  celular?: string;
-  data_nascimento?: string;
-  gid_empresa: number;
-  cnpj_empresa?: string;
-}
-
-export interface AuthResponse {
-  mensagem: string;
-  token: string;
-  usuario: Usuario;
-}
-
-export interface ApiError {
-  erro: string;
-}
-
-export interface AuthContextType {
-  user: Usuario | null;
-  token: string | null;
-  login: (email: string, senha: string) => Promise<void>;
-  registro: (dados: RegistroData) => Promise<void>;
-  logout: () => void;
-  loading: boolean;
 }
 
 // Tipos existentes do sistema (mantidos para compatibilidade)

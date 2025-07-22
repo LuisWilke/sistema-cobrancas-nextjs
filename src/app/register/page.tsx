@@ -19,7 +19,6 @@ export default function RegisterPage() {
     cpf_usuario: '',
     celular: '',
     data_nascimento: '',
-    gid_empresa: 1, // Valor padrão ou buscar de uma lista
     cnpj_empresa: ''
   })
   const [loading, setLoading] = useState(false)
@@ -35,15 +34,29 @@ export default function RegisterPage() {
     setError('')
     setSuccess(false)
 
-    // Validar senhas
+    // Validações básicas
+    if (!formData.nome || !formData.email || !formData.senha) {
+      setError('Nome, email e senha são obrigatórios')
+      setLoading(false)
+      return
+    }
+
     if (formData.senha !== formData.confirmarSenha) {
       setError('As senhas não coincidem')
       setLoading(false)
       return
     }
 
+    if (formData.senha.length < 6) {
+      setError('A senha deve ter pelo menos 6 caracteres')
+      setLoading(false)
+      return
+    }
+
     try {
+      // Preparar dados para envio (remover confirmarSenha)
       const { confirmarSenha, ...dadosRegistro } = formData
+      
       const ok = await register(dadosRegistro)
       if (ok) {
         setSuccess(true)
@@ -58,7 +71,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (error) setError('')
   }

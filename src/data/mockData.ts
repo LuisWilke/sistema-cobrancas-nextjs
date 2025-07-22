@@ -1,4 +1,4 @@
-import { Document, DashboardMetrics, MessageTemplate, PIXKey, PIXTransaction } from '@/types';
+import { Document, DashboardMetrics, MessageTemplate, PIXKey, PIXTransaction } from '@/types/index';
 
 export const mockDocuments: Document[] = [
   {
