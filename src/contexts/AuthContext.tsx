@@ -12,7 +12,6 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   error: string | null;
-  registro: (dados: RegisterCredentials) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +22,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Verificar se há um token válido no localStorage
     const token = localStorage.getItem('token');
     if (token) {
       verifyToken();
@@ -120,11 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
   };
 
-  const registro = async (dados: RegisterCredentials): Promise<void> => {
-    // Implementação fictícia, ajuste conforme necessário
-    await register(dados);
-  };
-
   const value = {
     user,
     isAuthenticated: !!user,
@@ -132,8 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     loading,
-    error,
-    registro
+    error
   };
 
   return (
@@ -150,4 +142,3 @@ export function useAuth() {
   }
   return context;
 }
-

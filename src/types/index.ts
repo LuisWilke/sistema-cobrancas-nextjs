@@ -9,7 +9,9 @@ export interface Usuario {
   data_nascimento?: string;
   gid_empresa: number;
   cnpj_empresa?: string;
+  ativo?: boolean;
   created_at?: string;
+  updated_at?: string;
   empresa?: Empresa;
 }
 
@@ -21,6 +23,38 @@ export interface Empresa {
   obs?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface AuthCredentials {
+  email: string;
+  senha: string;
+}
+
+export interface RegisterCredentials {
+  nome: string;
+  email: string;
+  senha: string;
+  cpf_usuario?: string;
+  celular?: string;
+  data_nascimento?: string;
+  gid_empresa: number;
+  cnpj_empresa?: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface AuthResponse {
+  mensagem: string;
+  token: string;
+  usuario: Usuario;
+}
+
+export interface ApiError {
+  erro: string;
 }
 
 export interface LoginData {

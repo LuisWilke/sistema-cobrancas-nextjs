@@ -1,8 +1,8 @@
 // Biblioteca para comunicação com a API do backend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   data?: T;
   error?: string;
   message?: string;
@@ -86,7 +86,7 @@ export const api = {
         nome: string;
         email: string;
       };
-    }>('/registro', {
+    }>('/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });

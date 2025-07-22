@@ -146,7 +146,7 @@ export default function LoginPage() {
                   <span className="text-sm text-gray-600">
                     Não tem uma conta?{' '}
                     <Link 
-                      href="/registro" 
+                      href="/register" 
                       className="font-bold text-blue-600 hover:text-blue-700 underline"
                     >
                       Criar conta
