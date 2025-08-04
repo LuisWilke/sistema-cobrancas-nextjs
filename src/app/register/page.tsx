@@ -1,14 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { ClassAttributes, InputHTMLAttributes, JSX, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
+import InputMask from 'react-input-mask';
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2 } from 'lucide-react'
 import Link from 'next/link'
+
+
+function formatCpf(value: string) {
+  return value
+    .replace(/\D/g, '')                         
+    .replace(/(\d{3})(\d)/, '$1.$2')            
+    .replace(/(\d{3})(\d)/, '$1.$2')            
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');     
+}
+
+function formatPhone(value: string) {
+  value = value.replace(/\D/g, ''); 
+
+  value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+
+  if (value.length >= 10) {
+    
+    value = value.replace(/(\d{5})(\d{4})$/, '$1-$2');
+  } else {
+    
+    value = value.replace(/(\d{4})(\d{4})$/, '$1-$2');
+  }
+
+  return value;
+}
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -56,7 +82,7 @@ export default function RegisterPage() {
     try {
       // Preparar dados para envio (remover confirmarSenha)
       const { confirmarSenha, ...dadosRegistro } = formData
-      
+
       const ok = await register(dadosRegistro)
       if (ok) {
         setSuccess(true)
@@ -151,14 +177,14 @@ export default function RegisterPage() {
                 <div className="space-y-2">
                   <Label htmlFor="cpf_usuario" className="text-sm font-medium">
                     CPF
-                  </Label>
-                  <Input
-                    id="cpf_usuario"
-                    type="text"
-                    placeholder="000.000.000-00"
-                    value={formData.cpf_usuario}
-                    onChange={(e) => handleInputChange('cpf_usuario', e.target.value)}
-                  />
+                  </Label>             
+                      <Input
+                        id="cpf_usuario"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        value={formData.cpf_usuario}
+                        onChange={(e) => handleInputChange('cpf_usuario', formatCpf(e.target.value))} 
+                      />
                 </div>
 
                 <div className="space-y-2">
@@ -170,7 +196,7 @@ export default function RegisterPage() {
                     type="text"
                     placeholder="(11) 99999-9999"
                     value={formData.celular}
-                    onChange={(e) => handleInputChange('celular', e.target.value)}
+                    onChange={(e) => handleInputChange('celular', formatPhone(e.target.value))}
                   />
                 </div>
 
@@ -213,8 +239,8 @@ export default function RegisterPage() {
               )}
 
               <div className="text-center">
-                <Link 
-                  href="/login" 
+                <Link
+                  href="/login"
                   className="text-sm font-bold text-orange-600 hover:text-orange-600 underline"
                 >
                   Já tenho uma conta
