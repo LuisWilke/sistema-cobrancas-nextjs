@@ -1,130 +1,104 @@
 import { Document, DashboardMetrics, MessageTemplate, PIXKey, PIXTransaction } from '@/types/index';
 
+
 export const mockDocuments: Document[] = [
-  {
+  { 
+    clienteId: 1,
     id: '1',
-    client: {
-      id: '1',
-      name: 'João Silva',
-      email: 'joao@email.com',
-      phone: '(11) 99999-1111',
-      cpfCnpj: '123.456.789-00'
-    },
-    documentNumber: 'NF 001234',
-    installment: '1/3',
-    issueDate: '15/05/2024',
-    dueDate: '15/06/2024',
-    value: 1250.00,
-    interest: 25.00,
-    total: 1275.00,
-    status: 'vencido_5_dias'
-  },
-  {
-    id: '2',
-    client: {
-      id: '2',
-      name: 'Maria Santos',
-      email: 'maria@email.com',
-      phone: '(11) 99999-2222',
-      cpfCnpj: '987.654.321-00'
-    },
+    numero: 'NF 001235',
     documentNumber: 'NF 001235',
     installment: '2/2',
     issueDate: '20/05/2024',
+    emissao: '20/05/2024',
     dueDate: '20/06/2024',
+    vencimento: '20/06/2024',
+    valor: 850.00,
+    value: 850.00,
+    interest: 0.00,
+    total: 850.00,
+    status: 'vence_hoje'
+  },
+
+  {
+    clienteId: 2,
+    id: '2',
+    numero: 'NF 001235',
+    documentNumber: 'NF 001235',
+    installment: '2/2',
+    issueDate: '20/05/2024',
+    emissao: '20/05/2024',
+    dueDate: '20/06/2024',
+    vencimento: '20/06/2024',
+    valor: 850.00,
     value: 850.00,
     interest: 0.00,
     total: 850.00,
     status: 'vence_hoje'
   },
   {
-    id: '3',
-    client: {
-      id: '3',
-      name: 'Pedro Oliveira',
-      email: 'pedro@email.com',
-      phone: '(11) 99999-3333',
-      cpfCnpj: '456.789.123-00'
-    },
-    documentNumber: 'NF 001236',
-    installment: '1/1',
-    issueDate: '25/05/2024',
-    dueDate: '25/06/2024',
-    value: 2100.00,
+    clienteId: 3,
+    id: '2',
+    numero: 'NF 001235',
+    documentNumber: 'NF 001235',
+    installment: '2/2',
+    issueDate: '20/05/2024',
+    emissao: '20/05/2024',
+    dueDate: '20/06/2024',
+    vencimento: '20/06/2024',
+    valor: 850.00,
+    value: 850.00,
     interest: 0.00,
-    total: 2100.00,
-    status: 'vence_10_dias'
+    total: 850.00,
+    status: 'vence_hoje'
+  },
+
+  { 
+    clienteId: 4,
+    id: '2',
+    numero: 'NF 001235',
+    documentNumber: 'NF 001235',
+    installment: '2/2',
+    issueDate: '20/05/2024',
+    emissao: '20/05/2024',
+    dueDate: '20/06/2024',
+    vencimento: '20/06/2024',
+    valor: 850.00,
+    value: 850.00,
+    interest: 0.00,
+    total: 850.00,
+    status: 'vence_hoje'
   },
   {
-    id: '4',
-    client: {
-      id: '4',
-      name: 'Ana Costa',
-      email: 'ana@email.com',
-      phone: '(11) 99999-4444',
-      cpfCnpj: '789.123.456-00'
-    },
-    documentNumber: 'NF 001237',
-    installment: '3/3',
-    issueDate: '10/05/2024',
-    dueDate: '10/06/2024',
-    value: 750.00,
-    interest: 45.00,
-    total: 795.00,
-    status: 'vencido_5_dias'
-  },
-  {
-    id: '5',
-    client: {
-      id: '5',
-      name: 'Carlos Ferreira',
-      email: 'carlos@email.com',
-      phone: '(11) 99999-5555',
-      cpfCnpj: '321.654.987-00'
-    },
-    documentNumber: 'NF 001238',
-    installment: '1/2',
-    issueDate: '30/05/2024',
-    dueDate: '30/06/2024',
-    value: 1800.00,
+    clienteId: 5,
+    id: '2',
+    numero: 'NF 001235',
+    documentNumber: 'NF 001235',
+    installment: '2/2',
+    issueDate: '20/05/2024',
+    emissao: '20/05/2024',
+    dueDate: '20/06/2024',
+    vencimento: '20/06/2024',
+    valor: 850.00,
+    value: 850.00,
     interest: 0.00,
-    total: 1800.00,
-    status: 'vence_15_dias'
+    total: 850.00,
+    status: 'vence_hoje'
   }
 ];
 
 export const mockDashboardMetrics: DashboardMetrics = {
-  overdue: {
-    value: 129454.00,
-    clients: 15
-  },
+  overdue: 129454.00,
+  totalClients: 126,
+  totalInvoices: 98,
+  totalAmount: 1014721.35,
+  pendingInvoices: 45,
+  overdueInvoices: 13,
+  paidInvoices: 25,
+  overdueAmount: 15898.08,
   dueIn2Days: {
-    value: 545123.09,
-    clients: 45
-  },
-  dueIn3To10Days: {
-    value: 232123.09,
-    clients: 25
-  },
-  dueOver10Days: {
-    value: 125123.09,
-    clients: 28
-  },
-  totalOverdue: {
-    value: 15898.08,
-    clients: 13
-  },
-  dueTodayTotal: {
-    value: 129454.00,
-    clients: 15
-  },
-  totalDue: {
-    value: 902369.27,
-    clients: 98
-  },
-  totalReceivable: {
-    value: 1014721.35,
-    clients: 126
+    count: 5, 
+    value: 1275.00,
+    client: 3 // Número de clientes com documentos vencendo em 2 dias
   }
 };
 
@@ -147,7 +121,7 @@ Equipe Financeira`,
   },
   whatsapp: {
     id: '2',
-    type: 'whatsapp',
+    type: 'sms',
     content: `Olá {cliente}! 👋
 
 Seu documento {documento} no valor de {valor} está vencendo em {vencimento}.
@@ -168,21 +142,27 @@ Dúvidas? Responda esta mensagem.`,
 export const mockPIXKeys: PIXKey[] = [
   {
     id: '1',
-    type: 'cnpj',
+    type: 'CNPJ',
     value: '12.345.678/0001-90',
-    active: true
+    active: true,
+    key: 'chavepixempresa',
+    createdAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '2',
-    type: 'email',
+    type: 'EMAIL',
     value: 'pix@empresa.com',
-    active: true
+    active: true,
+    key: 'chavepixemail',
+    createdAt: '2024-01-02T00:00:00Z'
   },
   {
     id: '3',
-    type: 'phone',
+    type: 'PHONE',
     value: '11999999999',
-    active: false
+    active: false,
+    key: 'chavepixtelefone',
+    createdAt: '2024-01-03T00:00:00Z'
   }
 ];
 

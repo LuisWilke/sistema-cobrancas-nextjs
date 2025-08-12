@@ -1,5 +1,3 @@
-// Biblioteca para comunicação com a API do backend
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 
 export interface ApiResponse<T> {
@@ -29,7 +27,6 @@ async function apiRequest<T>(
     ...options,
   };
 
-  // Adicionar token de autorização se disponível
   const token = localStorage.getItem('token');
   if (token) {
     config.headers = {
@@ -56,7 +53,7 @@ async function apiRequest<T>(
 }
 
 export const api = {
-  // Autenticação
+ 
   login: async (credentials: { email: string; senha: string }) => {
     return apiRequest<{
       mensagem: string;
@@ -92,7 +89,7 @@ export const api = {
     });
   },
 
-  // Verificar token
+  
   verifyToken: async () => {
     return apiRequest<{
       valido: boolean;
@@ -104,7 +101,7 @@ export const api = {
     }>('/verificar-token');
   },
 
-  // Obter perfil do usuário
+ 
   getProfile: async () => {
     return apiRequest<{
       usuario: {

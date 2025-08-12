@@ -4,7 +4,6 @@ import { ClassAttributes, InputHTMLAttributes, JSX, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
-import InputMask from 'react-input-mask';
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,6 +18,16 @@ function formatCpf(value: string) {
     .replace(/(\d{3})(\d)/, '$1.$2')            
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');     
 }
+/*
+function formatCnpj(value: string) {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{2})(\d)/, '$1.$2')
+    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+    .replace(/(\d{4})(\d{2})$/, '$1-$2');
+}
+  */
 
 function formatPhone(value: string) {
   value = value.replace(/\D/g, ''); 
@@ -80,7 +89,7 @@ export default function RegisterPage() {
     }
 
     try {
-      // Preparar dados para envio (remover confirmarSenha)
+      
       const { confirmarSenha, ...dadosRegistro } = formData
 
       const ok = await register(dadosRegistro)

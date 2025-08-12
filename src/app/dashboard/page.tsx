@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Users, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { mockDashboardMetrics } from '@/data/mockData';
-import { DashboardMetrics } from '@/types';
+import { DashboardMetrics } from '@/types/index';
 
 export default function DashboardPage() {
   const [metrics, setMetrics] = useState<DashboardMetrics>(mockDashboardMetrics);
@@ -61,11 +61,10 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="text-2xl font-bold text-red-700">
-                    {formatCurrency(metrics.overdue.value)}
+                    {formatCurrency(metrics.overdue)}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-red-600">
                     <Users className="w-4 h-4" />
-                    {metrics.overdue.clients} Clientes
                   </div>
                 </div>
               </CardContent>

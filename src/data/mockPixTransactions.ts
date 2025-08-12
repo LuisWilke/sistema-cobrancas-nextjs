@@ -1,4 +1,4 @@
-import { PixTransaction } from "@/types";
+import { PixTransaction } from "@/types/index";
 
 export const mockPixTransactions: PixTransaction[] = [
   {

@@ -13,6 +13,7 @@ export interface Usuario {
   empresa?: Empresa;
 }
 
+
 export interface Empresa {
   id: number;
   cnpj_empresa: string;
@@ -113,4 +114,62 @@ export interface PixTransaction {
   pixCopyPaste: string;
   boletoLink: string;
   walletInfo: string;
+}
+
+export interface PIXKey {
+  id: string;
+  type: 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'RANDOM';
+  key: string;
+  value: string;
+  createdAt: string;
+  active: boolean;
+}
+
+export interface PIXTransaction {
+  id: string;
+  documentId: string;
+  value: number;
+  date: string;
+  status: 'pending' | 'completed' | 'failed';
+}
+
+export interface MessageTemplate {
+  id: string;
+  type: 'email' | 'sms';
+  content: string;
+  variables: string[];
+  subject?: string; // Apenas para email
+}
+
+export interface Document {
+  [x: string]: any;
+  id: string;
+  clienteId: number;
+  numero: string;
+  valor: number;
+  vencimento: string;
+  emissao: string;
+  status: string;
+  linkPagamento?: string;
+  documentNumber?: string; 
+  installment: string; 
+  issueDate: string; 
+  dueDate: string; 
+  paymentDate?: string;
+  value: number;
+  interest?: number;
+  total?: number;
+}
+
+export interface DashboardMetrics {
+  [x: string]: any;
+  dueIn2Days: any;
+  overdue: number;
+  totalClients: number;
+  totalInvoices: number;
+  totalAmount: number;
+  pendingInvoices: number;
+  overdueInvoices: number;
+  paidInvoices: number;
+  overdueAmount: number;
 }

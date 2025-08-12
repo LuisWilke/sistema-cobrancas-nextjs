@@ -27,7 +27,7 @@ import {
   Send
 } from 'lucide-react';
 import { mockDocuments } from '@/data/mockData';
-import { Document } from '@/types';
+import { Document } from '@/types/index';
 
 // Função para parse seguro de 'dd/MM/yyyy'
 const parseDate = (str: string) => {
@@ -72,7 +72,7 @@ export default function CobrancasPage() {
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch =
       doc.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.documentNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      (doc.documentNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const dueDateObj = parseDate(doc.dueDate);
 
@@ -131,7 +131,7 @@ export default function CobrancasPage() {
     const clientName = doc.client.name.split(' ')[0];
     const dueDate = doc.dueDate;
     const docNumber = doc.documentNumber;
-    const totalValue = formatCurrency(doc.total);
+    const totalValue = formatCurrency(doc.total || 0);
     
     if (type === 'email') {
       return `Prezado(a) ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nCaso já tenha efetuado o pagamento, por favor desconsidere este e-mail.\n\nAtenciosamente,\nEquipe de Cobrança`;
@@ -464,8 +464,8 @@ export default function CobrancasPage() {
                         <TableCell>{document.issueDate}</TableCell>
                         <TableCell>{document.dueDate}</TableCell>
                         <TableCell>{formatCurrency(document.value)}</TableCell>
-                        <TableCell>{formatCurrency(document.interest)}</TableCell>
-                        <TableCell className="font-medium">{formatCurrency(document.total)}</TableCell>
+                        <TableCell>{formatCurrency(document.interest ?? 0)}</TableCell>
+                        <TableCell className="font-medium">{formatCurrency(document.total ?? 0)}</TableCell>
                         <TableCell>{getStatusBadge(document.status)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">

@@ -27,7 +27,7 @@ export default function RegistroPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
-  const { registro } = useAuth();
+  //const { registro } = useAuth();
   const router = useRouter();
 
   // Carregar lista de empresas
@@ -251,4 +251,8 @@ export default function RegistroPage() {
       </Card>
     </div>
   );
+}
+
+function registro(arg0: { nome: string; email: string; senha: string; confirmarSenha: string; cpf_usuario: string; celular: string; data_nascimento: string; gid_empresa: number; cnpj_empresa: string; }) {
+  throw new Error('Function not implemented.');
 }

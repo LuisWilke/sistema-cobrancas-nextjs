@@ -27,7 +27,7 @@ import {
   CheckIcon,
 } from 'lucide-react';
 import { mockMessageTemplates } from '@/data/mockData';
-import { MessageTemplate } from '@/types';
+import { MessageTemplate } from '@/types/index';
 import { PixKeysSection } from '@/components/PixKeysSection'; // Importar o novo componente
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import React from 'react';
