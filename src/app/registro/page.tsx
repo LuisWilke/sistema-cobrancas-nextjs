@@ -27,7 +27,7 @@ export default function RegistroPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
-  const { registro } = useAuth();
+  const { register } = useAuth();
   const router = useRouter();
 
   // Carregar lista de empresas
@@ -87,11 +87,11 @@ export default function RegistroPage() {
     setLoading(true);
 
     try {
-      await registro({
+      await register({
         nome: formData.nome,
         email: formData.email,
         senha: formData.senha,
-        confirmarSenha: formData.confirmarSenha,
+
         cpf_usuario: formData.cpf_usuario,
         celular: formData.celular,
         data_nascimento: formData.data_nascimento,

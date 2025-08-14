@@ -36,6 +36,7 @@ export interface RegisterCredentials {
   cpf_usuario?: string;
   celular?: string;
   data_nascimento?: string;
+  gid_empresa?: number;
   cnpj_empresa?: string;
 }
 
@@ -44,6 +45,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  company?: {
+    name: string;
+    cnpj: string;
+  };
 }
 
 export interface AuthResponse {
@@ -53,6 +58,10 @@ export interface AuthResponse {
     id: number;
     nome: string;
     email: string;
+    empresa?: {
+      nome_empresa: string;
+      cnpj_empresa: string;
+    };
   };
 }
 
@@ -113,4 +122,57 @@ export interface PixTransaction {
   pixCopyPaste: string;
   boletoLink: string;
   walletInfo: string;
+}
+
+export interface Document {
+  id: string;
+  client: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    cpfCnpj: string;
+  };
+  documentNumber: string;
+  installment: string;
+  issueDate: string;
+  dueDate: string;
+  value: number;
+  interest: number;
+  total: number;
+  status: string;
+}
+
+export interface DashboardMetrics {
+  overdue: { value: number; clients: number };
+  dueIn2Days: { value: number; clients: number };
+  dueIn3To10Days: { value: number; clients: number };
+  dueOver10Days: { value: number; clients: number };
+  totalOverdue: { value: number; clients: number };
+  dueTodayTotal: { value: number; clients: number };
+  totalDue: { value: number; clients: number };
+  totalReceivable: { value: number; clients: number };
+}
+
+export interface MessageTemplate {
+  id: string;
+  type: string;
+  subject?: string;
+  content: string;
+  variables: string[];
+}
+
+export interface PIXKey {
+  id: string;
+  type: string;
+  value: string;
+  active: boolean;
+}
+
+export interface PIXTransaction {
+  id: string;
+  documentId: string;
+  value: number;
+  date: string;
+  status: string;
 }

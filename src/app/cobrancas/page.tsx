@@ -27,7 +27,7 @@ import {
   Send
 } from 'lucide-react';
 import { mockDocuments } from '@/data/mockData';
-import { Document } from '@/types';
+import { Document } from '@/types/index';
 
 // Função para parse seguro de 'dd/MM/yyyy'
 const parseDate = (str: string) => {

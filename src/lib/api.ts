@@ -65,9 +65,13 @@ export const api = {
         id: number;
         nome: string;
         email: string;
+        empresa?: {
+          nome_empresa: string;
+          cnpj_empresa: string;
+        };
       };
-    }>('/login', {
-      method: 'POST',
+    }>("/login", {
+      method: "POST",
       body: JSON.stringify(credentials),
     });
   },
@@ -85,9 +89,13 @@ export const api = {
         id: number;
         nome: string;
         email: string;
+        empresa?: {
+          nome_empresa: string;
+          cnpj_empresa: string;
+        };
       };
-    }>('/register', {
-      method: 'POST',
+    }>("/register", {
+      method: "POST",
       body: JSON.stringify(userData),
     });
   },
@@ -100,8 +108,12 @@ export const api = {
         id: number;
         nome: string;
         email: string;
+        empresa?: {
+          nome_empresa: string;
+          cnpj_empresa: string;
+        };
       };
-    }>('/verificar-token');
+    }>("/verificar-token");
   },
 
   // Obter perfil do usuário
@@ -118,4 +130,3 @@ export const api = {
 };
 
 export { ApiError };
-

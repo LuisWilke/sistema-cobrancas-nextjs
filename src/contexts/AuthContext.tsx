@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: response.usuario.id.toString(),
           name: response.usuario.nome,
           email: response.usuario.email,
+          company: response.usuario.empresa ? { name: response.usuario.empresa.nome_empresa, cnpj: response.usuario.empresa.cnpj_empresa } : undefined,
         });
       } else {
         localStorage.removeItem('token');
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: response.usuario.id.toString(),
         name: response.usuario.nome,
         email: response.usuario.email,
+        company: response.usuario.empresa ? { name: response.usuario.empresa.nome_empresa, cnpj: response.usuario.empresa.cnpj_empresa } : undefined,
       };
       
       setUser(userData);
