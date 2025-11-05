@@ -486,15 +486,6 @@ export default function CobrancasPage() {
                   setCurrentPage(1);
                   fetchCobrancas(1, statusFilter, searchTerm);
                 }}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="Por página" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 por página</SelectItem>
-                    <SelectItem value="15">15 por página</SelectItem>
-                    <SelectItem value="25">25 por página</SelectItem>
-                    <SelectItem value="50">50 por página</SelectItem>
-                  </SelectContent>
                 </Select>
                 <Button variant="outline" onClick={clearAllFilters} className="w-full sm:w-auto">
                   Limpar Filtros
