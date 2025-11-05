@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   Download,
   Search,
@@ -24,81 +23,173 @@ import {
   Calendar,
   Filter,
   X,
-  Send
+  Send,
+  Loader2
 } from 'lucide-react';
-import { mockDocuments } from '@/data/mockData';
-import { Document } from '@/types/index';
 
-// Função para parse seguro de 'dd/MM/yyyy'
-const parseDate = (str: string) => {
-  const [day, month, year] = str.split('/');
-  return new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0);
+// Tipos baseados na resposta da API
+interface Cobranca {
+  id_cobranca: number;
+  brcode: string;
+  codigo_cliente: string;
+  client_doc: string;
+  nome_cliente: string;
+  telefone_cliente: string;
+  empresa: string;
+  criado_em: string;
+  emissao: string;
+  data_pagamento: string | null;
+  vencimento: string;
+  desc_status: string;
+  dias_carencia: string;
+  documento_loja: string;
+  idtrecparcela: string;
+  juro_diario: string;
+  juros: string;
+  parcela_loja: string;
+  company_cpf: string;
+  percentage_fine: string;
+  processing: boolean;
+  status: string;
+  atualizado_em: string;
+  url_boleto: string | null;
+  valor_multa: string;
+  valor_pago: string;
+  valor_pendente: string;
+  valor: string;
+}
+
+interface ApiResponse {
+  page: number;
+  total_pages: number;
+  total: number;
+  per_page: number;
+  cobrancas: Cobranca[];
+}
+
+// Função para formatar data
+const formatDateToBR = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('pt-BR');
 };
 
 // Função para calcular dias até o vencimento
 const getDaysUntilDue = (dueDate: string) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const due = parseDate(dueDate);
+  const due = new Date(dueDate);
   const diffTime = due.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+// Função segura para converter para string
+const safeToString = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  return String(value);
+};
+
 export default function CobrancasPage() {
-  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const [cobrancas, setCobrancas] = useState<Cobranca[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateStart, setDateStart] = useState<Date | null>(null);
-  const [dateEnd, setDateEnd] = useState<Date | null>(null);
-  const [dueDateFilter, setDueDateFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('pendente');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(15);
+  const [total, setTotal] = useState(0);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [sendType, setSendType] = useState<'email' | 'whatsapp' | 'sms' | null>(null);
+  const [sendType, setSendType] = useState<'email' | 'whatsapp' | null>(null);
   
   // Estados para os modais individuais
-  const [currentContactDoc, setCurrentContactDoc] = useState<Document | null>(null);
-  const [contactType, setContactType] = useState<'email' | 'whatsapp' | 'phone' | null>(null);
-  const [messageContent, setMessageContent] = useState('');
-
-  // Novo estado para o modal de envio de SMS/WhatsApp/Email individual
+  const [currentContactDoc, setCurrentContactDoc] = useState<Cobranca | null>(null);
   const [showIndividualSendModal, setShowIndividualSendModal] = useState(false);
-  const [individualSendType, setIndividualSendType] = useState<'email' | 'whatsapp' | 'sms' | null>(null);
+  const [individualSendType, setIndividualSendType] = useState<'email' | 'whatsapp' | null>(null);
   const [individualMessageContent, setIndividualMessageContent] = useState('');
   const [individualRecipient, setIndividualRecipient] = useState('');
 
-  // Novo estado para o modal de log
+  // Estados para o modal de log
   const [showLogModal, setShowLogModal] = useState(false);
-  const [currentLogDoc, setCurrentLogDoc] = useState<Document | null>(null);
+  const [currentLogDoc, setCurrentLogDoc] = useState<Cobranca | null>(null);
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesSearch =
-      doc.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.documentNumber.toLowerCase().includes(searchTerm.toLowerCase());
+  // Função para buscar dados da API
+  const fetchCobrancas = async (page: number, status: string, search: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams({
+        status,
+        page: page.toString(),
+        per_page: perPage.toString(),
+      });
 
-    const dueDateObj = parseDate(doc.dueDate);
+      // Adicionar search apenas se houver valor
+      if (search.trim()) {
+        params.append('search', search);
+      }
 
-    const withinDateRange =
-      (!dateStart || dueDateObj >= dateStart) &&
-      (!dateEnd || dueDateObj <= dateEnd);
+      console.log('Buscando com parâmetros:', Object.fromEntries(params));
 
-    const daysUntilDue = getDaysUntilDue(doc.dueDate);
-    let matchesDueDateFilter = true;
-
-    switch (dueDateFilter) {
-      case 'overdue': matchesDueDateFilter = daysUntilDue < 0; break;
-      case 'due_today': matchesDueDateFilter = daysUntilDue === 0; break;
-      case 'due_this_week': matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 7; break;
-      case 'due_this_month': matchesDueDateFilter = daysUntilDue >= 0 && daysUntilDue <= 30; break;
-      case 'due_next_month': matchesDueDateFilter = daysUntilDue > 30 && daysUntilDue <= 60; break;
-      case 'all': default: matchesDueDateFilter = true; break;
+      const response = await fetch(`http://localhost:5000/cobrancas?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+      
+      const data: ApiResponse = await response.json();
+      
+      console.log('Resposta da API:', {
+        page: data.page,
+        total_pages: data.total_pages,
+        total: data.total,
+        per_page: data.per_page,
+        cobrancas_count: data.cobrancas?.length || 0
+      });
+      
+      setCobrancas(data.cobrancas || []);
+      setCurrentPage(data.page);
+      setTotalPages(data.total_pages || 1);
+      setTotal(data.total || 0);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      console.error('Erro ao buscar cobranças:', err);
+      setCobrancas([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    return matchesSearch && withinDateRange && matchesDueDateFilter;
-  });
+  // Effect para buscar dados iniciais
+  useEffect(() => {
+    fetchCobrancas(1, statusFilter, '');
+  }, []); // Executar apenas na montagem
+
+  // Effect para buscar quando filtros mudarem (com debounce para search)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      // Resetar para página 1 quando filtros mudarem
+      setCurrentPage(1);
+      fetchCobrancas(1, statusFilter, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, statusFilter]);
+
+  // Effect para buscar quando a página mudar
+  useEffect(() => {
+    if (currentPage > 1) {
+      fetchCobrancas(currentPage, statusFilter, searchTerm);
+    }
+  }, [currentPage]);
 
   // Funções de seleção
   const handleSelectAll = () => {
     setSelectedDocuments(prev =>
-      prev.length === filteredDocuments.length ? [] : filteredDocuments.map(doc => doc.id)
+      prev.length === cobrancas.length ? [] : cobrancas.map(doc => safeToString(doc.id_cobranca))
     );
   };
 
@@ -110,56 +201,31 @@ export default function CobrancasPage() {
     );
   };
 
-  // Funções para modais de contato (antigo)
-  const openContactModal = (type: 'email' | 'whatsapp' | 'phone', doc: Document) => {
-    setCurrentContactDoc(doc);
-    setContactType(type);
-    setMessageContent(getDefaultMessage(type, doc));
-    // setShowIndividualSendModal(true); // Abrir o novo modal
-    // setIndividualSendType(type); // Definir o tipo de envio
-    // setIndividualMessageContent(getDefaultMessage(type, doc)); // Definir a mensagem padrão
-    // setIndividualRecipient(type === 'email' ? doc.client.email : doc.client.phone); // Definir o destinatário
-  };
-
-  const closeContactModal = () => {
-    setCurrentContactDoc(null);
-    setContactType(null);
-    setMessageContent('');
-  };
-
-  const getDefaultMessage = (type: 'email' | 'whatsapp' | 'sms' | 'phone', doc: Document) => {
-    const clientName = doc.client.name.split(' ')[0];
-    const dueDate = doc.dueDate;
-    const docNumber = doc.documentNumber;
-    const totalValue = formatCurrency(doc.total);
-    
-    if (type === 'email') {
-      return `Prezado(a) ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nCaso já tenha efetuado o pagamento, por favor desconsidere este e-mail.\n\nAtenciosamente,\nEquipe de Cobrança`;
-    } else if (type === 'whatsapp' || type === 'sms') {
-      return `Olá ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nClique no link para pagar: [LINK_PAGAMENTO]\n\nAtenciosamente,\nEquipe de Cobrança`;
+  // Funções para paginação
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
-    return '';
   };
 
-  const handleSendContactMessage = () => {
-    if (!currentContactDoc || !contactType) return;
-    
-    console.log(`Enviando ${contactType} para ${currentContactDoc.client.name}`, {
-      message: messageContent,
-      contact: contactType === 'email' 
-        ? currentContactDoc.client.email 
-        : currentContactDoc.client.phone
-    });
-    
-    closeContactModal();
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
-  // Funções para o novo modal de envio individual
-  const openIndividualSendModal = (type: 'email' | 'whatsapp' | 'sms', doc: Document) => {
-    setCurrentContactDoc(doc);
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Funções para modais
+  const openIndividualSendModal = (type: 'email' | 'whatsapp', cobranca: Cobranca) => {
+    setCurrentContactDoc(cobranca);
     setIndividualSendType(type);
-    setIndividualMessageContent(getDefaultMessage(type, doc));
-    setIndividualRecipient(type === 'email' ? doc.client.email || '' : doc.client.phone || '');
+    setIndividualMessageContent(getDefaultMessage(type, cobranca));
+    setIndividualRecipient(type === 'email' ? '' : safeToString(cobranca.telefone_cliente));
     setShowIndividualSendModal(true);
   };
 
@@ -174,15 +240,29 @@ export default function CobrancasPage() {
   const handleIndividualSendMessage = () => {
     if (!currentContactDoc || !individualSendType) return;
 
-    console.log(`Enviando ${individualSendType} para ${currentContactDoc.client.name}`, {
+    console.log(`Enviando ${individualSendType} para ${currentContactDoc.nome_cliente}`, {
       message: individualMessageContent,
       recipient: individualRecipient,
     });
     closeIndividualSendModal();
   };
 
+  const getDefaultMessage = (type: 'email' | 'whatsapp' | 'sms', cobranca: Cobranca) => {
+    const clientName = safeToString(cobranca.nome_cliente).split(' ')[0];
+    const dueDate = formatDateToBR(cobranca.vencimento);
+    const docNumber = safeToString(cobranca.documento_loja);
+    const totalValue = formatCurrency(parseFloat(safeToString(cobranca.valor_pendente)) || 0);
+    
+    if (type === 'email') {
+      return `Prezado(a) ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\nCaso já tenha efetuado o pagamento, por favor desconsidere este e-mail.\n\nAtenciosamente,\nEquipe de Cobrança`;
+    } else if (type === 'whatsapp' || type === 'sms') {
+      return `Olá ${clientName},\n\nLembramos que a cobrança ${docNumber} no valor de ${totalValue} vence em ${dueDate}.\n\n${cobranca.brcode ? 'PIX Copia e Cola: ' + cobranca.brcode : ''}\n\nAtenciosamente,\nEquipe de Cobrança`;
+    }
+    return '';
+  };
+
   // Funções para envio em massa
-  const handleSendMessages = (type: 'email' | 'whatsapp' | 'sms') => {
+  const handleSendMessages = (type: 'email' | 'whatsapp') => {
     setSendType(type);
     setShowSendModal(true);
   };
@@ -195,8 +275,8 @@ export default function CobrancasPage() {
   };
 
   // Funções para o modal de log
-  const openLogModal = (doc: Document) => {
-    setCurrentLogDoc(doc);
+  const openLogModal = (cobranca: Cobranca) => {
+    setCurrentLogDoc(cobranca);
     setShowLogModal(true);
   };
 
@@ -206,14 +286,22 @@ export default function CobrancasPage() {
   };
 
   // Funções auxiliares
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'vencido_5_dias': return <Badge variant="destructive">Vencido há 5 dias</Badge>;
-      case 'vence_hoje': return <Badge className="bg-orange-500">Vence hoje</Badge>;
-      case 'vence_10_dias': return <Badge className="bg-green-500">Vence em 10 dias</Badge>;
-      case 'vence_15_dias': return <Badge className="bg-yellow-500">Vence em 15 dias</Badge>;
-      default: return <Badge variant="secondary">{status}</Badge>;
+  const getStatusBadge = (status: string, desc_status: string, vencimento: string) => {
+    const daysUntilDue = getDaysUntilDue(vencimento);
+    
+    if (status === 'pendente') {
+      if (daysUntilDue < 0) {
+        return <Badge variant="destructive">Vencido há {Math.abs(daysUntilDue)} dias</Badge>;
+      } else if (daysUntilDue === 0) {
+        return <Badge className="bg-orange-500">Vence hoje</Badge>;
+      } else if (daysUntilDue <= 7) {
+        return <Badge className="bg-yellow-500">Vence em {daysUntilDue} dias</Badge>;
+      } else {
+        return <Badge className="bg-green-500">Vence em {daysUntilDue} dias</Badge>;
+      }
     }
+    
+    return <Badge variant="secondary">{desc_status}</Badge>;
   };
 
   const formatCurrency = (value: number) => {
@@ -225,19 +313,20 @@ export default function CobrancasPage() {
 
   const clearAllFilters = () => {
     setSearchTerm('');
-    setDateStart(null);
-    setDateEnd(null);
-    setDueDateFilter('all');
+    setStatusFilter('pendente');
+    setCurrentPage(1);
   };
 
-  const selectedDocumentsList = documents.filter(doc => selectedDocuments.includes(doc.id));
+  const selectedCobrancasList = cobrancas.filter(doc => 
+    selectedDocuments.includes(safeToString(doc.id_cobranca))
+  );
 
   // Estatísticas
   const getFilterStats = () => {
-    const overdue = documents.filter(doc => getDaysUntilDue(doc.dueDate) < 0).length;
-    const dueToday = documents.filter(doc => getDaysUntilDue(doc.dueDate) === 0).length;
-    const dueThisWeek = documents.filter(doc => {
-      const days = getDaysUntilDue(doc.dueDate);
+    const overdue = cobrancas.filter(doc => getDaysUntilDue(doc.vencimento) < 0).length;
+    const dueToday = cobrancas.filter(doc => getDaysUntilDue(doc.vencimento) === 0).length;
+    const dueThisWeek = cobrancas.filter(doc => {
+      const days = getDaysUntilDue(doc.vencimento);
       return days >= 0 && days <= 7;
     }).length;
     
@@ -245,6 +334,63 @@ export default function CobrancasPage() {
   };
 
   const stats = getFilterStats();
+
+  // Renderizar páginas na paginação
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={i === currentPage ? "default" : "outline"}
+          size="sm"
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </Button>
+      );
+    }
+
+    return pages;
+  };
+
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="ml-2">Carregando cobranças...</span>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute>
+        <DashboardLayout>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Erro ao carregar cobranças: {error}</p>
+              <Button onClick={() => fetchCobrancas(currentPage, statusFilter, searchTerm)}>
+                Tentar novamente
+              </Button>
+            </div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -264,7 +410,7 @@ export default function CobrancasPage() {
 
           {/* Estatísticas rápidas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDueDateFilter('overdue')}>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -278,7 +424,7 @@ export default function CobrancasPage() {
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDueDateFilter('due_today')}>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -292,7 +438,7 @@ export default function CobrancasPage() {
               </CardContent>
             </Card>
             
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDueDateFilter('due_this_week')}>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -320,42 +466,37 @@ export default function CobrancasPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Buscar por cliente ou documento..."
+                    placeholder="Buscar por cliente, documento ou CPF/CNPJ..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <Select value={dueDateFilter} onValueChange={setDueDateFilter}>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="Filtrar por vencimento" />
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos os documentos</SelectItem>
-                    <SelectItem value="overdue">Vencidos</SelectItem>
-                    <SelectItem value="due_today">Vencem hoje</SelectItem>
-                    <SelectItem value="due_this_week">Vencem esta semana</SelectItem>
-                    <SelectItem value="due_this_month">Vencem este mês</SelectItem>
-                    <SelectItem value="due_next_month">Vencem próximo mês</SelectItem>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="pago">Pago</SelectItem>
+                    <SelectItem value="cancelado">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2 items-center">
-                <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Período personalizado:</span>
-                <Input
-                  type="date"
-                  placeholder="Data inicial"
-                  onChange={(e) => setDateStart(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)}
-                  className="w-full sm:w-auto"
-                />
-                <span className="text-sm text-gray-500">até</span>
-                <Input
-                  type="date"
-                  placeholder="Data final"
-                  onChange={(e) => setDateEnd(e.target.value ? new Date(e.target.value + 'T23:59:59') : null)}
-                  className="w-full sm:w-auto"
-                />
+                <Select value={perPage.toString()} onValueChange={(val) => {
+                  setPerPage(parseInt(val));
+                  setCurrentPage(1);
+                  fetchCobrancas(1, statusFilter, searchTerm);
+                }}>
+                  <SelectTrigger className="w-full sm:w-[150px]">
+                    <SelectValue placeholder="Por página" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 por página</SelectItem>
+                    <SelectItem value="15">15 por página</SelectItem>
+                    <SelectItem value="25">25 por página</SelectItem>
+                    <SelectItem value="50">50 por página</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button variant="outline" onClick={clearAllFilters} className="w-full sm:w-auto">
                   Limpar Filtros
                 </Button>
@@ -390,15 +531,6 @@ export default function CobrancasPage() {
                       <MessageCircle className="w-4 h-4" />
                       Enviar WhatsApp
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSendMessages('sms')}
-                      className="flex items-center gap-2"
-                    >
-                      <Phone className="w-4 h-4" />
-                      Enviar SMS
-                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -411,7 +543,7 @@ export default function CobrancasPage() {
               <CardTitle className="flex items-center justify-between">
                 <span>Documentos a receber</span>
                 <span className="text-sm font-normal text-gray-500">
-                  {filteredDocuments.length} de {documents.length} documentos
+                  Mostrando {cobrancas.length} de {total} documentos
                 </span>
               </CardTitle>
             </CardHeader>
@@ -422,13 +554,14 @@ export default function CobrancasPage() {
                     <TableRow>
                       <TableHead className="w-12">
                         <Button variant="ghost" size="sm" onClick={handleSelectAll} className="p-0">
-                          {selectedDocuments.length === filteredDocuments.length && filteredDocuments.length > 0 ? (
+                          {selectedDocuments.length === cobrancas.length && cobrancas.length > 0 ? (
                             <CheckSquare className="w-4 h-4" />
                           ) : (
                             <Square className="w-4 h-4" />
                           )}
                         </Button>
                       </TableHead>
+                      <TableHead>Código</TableHead>
                       <TableHead>Cliente</TableHead>
                       <TableHead>Documento</TableHead>
                       <TableHead>Parcela</TableHead>
@@ -436,71 +569,66 @@ export default function CobrancasPage() {
                       <TableHead>Vencimento</TableHead>
                       <TableHead>Valor</TableHead>
                       <TableHead>Juros</TableHead>
-                      <TableHead>Total</TableHead>
+                      <TableHead>Pendente</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredDocuments.map((document) => (
-                      <TableRow key={document.id}>
+                    {cobrancas.map((cobranca) => (
+                      <TableRow key={cobranca.id_cobranca}>
                         <TableCell>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleSelectDocument(document.id)}
+                            onClick={() => handleSelectDocument(safeToString(cobranca.id_cobranca))}
                             className="p-0"
                           >
-                            {selectedDocuments.includes(document.id) ? (
+                            {selectedDocuments.includes(safeToString(cobranca.id_cobranca)) ? (
                               <CheckSquare className="w-4 h-4 text-blue-600" />
                             ) : (
                               <Square className="w-4 h-4" />
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="font-medium">{document.client.name}</TableCell>
-                        <TableCell>{document.documentNumber}</TableCell>
-                        <TableCell>{document.installment}</TableCell>
-                        <TableCell>{document.issueDate}</TableCell>
-                        <TableCell>{document.dueDate}</TableCell>
-                        <TableCell>{formatCurrency(document.value)}</TableCell>
-                        <TableCell>{formatCurrency(document.interest)}</TableCell>
-                        <TableCell className="font-medium">{formatCurrency(document.total)}</TableCell>
-                        <TableCell>{getStatusBadge(document.status)}</TableCell>
+                        <TableCell className="font-medium">{safeToString(cobranca.codigo_cliente)}</TableCell>
+                        <TableCell className="font-medium">{safeToString(cobranca.nome_cliente)}</TableCell>
+                        <TableCell>{safeToString(cobranca.client_doc)}</TableCell>
+                        <TableCell>{safeToString(cobranca.parcela_loja)}</TableCell>
+                        <TableCell>{formatDateToBR(cobranca.emissao)}</TableCell>
+                        <TableCell>{formatDateToBR(cobranca.vencimento)}</TableCell>
+                        <TableCell>{formatCurrency(parseFloat(safeToString(cobranca.valor)) || 0)}</TableCell>
+                        <TableCell>{formatCurrency(parseFloat(safeToString(cobranca.juros)) || 0)}</TableCell>
+                        <TableCell className="font-medium">{formatCurrency(parseFloat(safeToString(cobranca.valor_pendente)) || 0)}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(cobranca.status, cobranca.desc_status, cobranca.vencimento)}
+                        </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            {/* Botão de E-mail */}
                             <Button 
                               size="sm" 
                               variant="ghost" 
                               className="p-2 hover:bg-red-50"
-                              onClick={() => openIndividualSendModal('email', document)}
+                              onClick={() => openIndividualSendModal('email', cobranca)}
                             >
                               <Mail className="w-4 h-4 text-red-600" />
                             </Button>
 
-                            {/* Botão de WhatsApp */}
                             <Button 
                               size="sm" 
                               variant="ghost" 
                               className="p-2 hover:bg-green-50"
-                              onClick={() => openIndividualSendModal('whatsapp', document)}
+                              onClick={() => openIndividualSendModal('whatsapp', cobranca)}
                             >
                               <MessageCircle className="w-4 h-4 text-green-600" />
                             </Button>
 
-                            {/* Botão de Telefone (SMS) */}
                             <Button 
                               size="sm" 
                               variant="ghost" 
-                              className="p-2 hover:bg-purple-50"
-                              onClick={() => openIndividualSendModal('sms', document)}
+                              className="p-2 hover:bg-blue-50" 
+                              onClick={() => openLogModal(cobranca)}
                             >
-                              <Phone className="w-4 h-4 text-purple-600" />
-                            </Button>
-
-                            {/* Botão de Visualizar (Log) */}
-                            <Button size="sm" variant="ghost" className="p-2 hover:bg-blue-50" onClick={() => openLogModal(document)}>
                               <Eye className="w-4 h-4 text-blue-600" />
                             </Button>
                           </div>
@@ -510,20 +638,50 @@ export default function CobrancasPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Paginação melhorada */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 border-t">
+                <div className="text-sm text-gray-600">
+                  Página {currentPage} de {totalPages} ({total} registros no total)
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage <= 1}
+                  >
+                    Anterior
+                  </Button>
+                  
+                  <div className="hidden sm:flex gap-1">
+                    {renderPageNumbers()}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage >= totalPages}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Novo Modal de Envio Individual (SMS/WhatsApp/Email) */}
+          {/* Modal de Envio Individual */}
           <Dialog open={showIndividualSendModal} onOpenChange={open => !open && closeIndividualSendModal()}>
             <DialogContent className="sm:max-w-[600px]">
               <DialogHeader>
                 <DialogTitle>
                   {individualSendType === 'email' && 'Enviar E-mail'}
                   {individualSendType === 'whatsapp' && 'Enviar Mensagem por WhatsApp'}
-                  {individualSendType === 'sms' && 'Enviar SMS'}
                 </DialogTitle>
                 <DialogDescription>
-                  Envio para {currentContactDoc?.client.name}
+                  Envio para {currentContactDoc?.nome_cliente}
                 </DialogDescription>
               </DialogHeader>
 
@@ -537,48 +695,8 @@ export default function CobrancasPage() {
                     value={individualRecipient}
                     onChange={(e) => setIndividualRecipient(e.target.value)}
                     className="mt-1"
-                    readOnly={individualSendType !== 'sms'} // Permitir edição apenas para telefone (se for para digitar novo número)
                   />
                 </div>
-
-                {(individualSendType === 'whatsapp' || individualSendType === 'sms') && (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="useExistingNumber"
-                      name="recipientOption"
-                      value="existing"
-                      checked={individualRecipient === currentContactDoc?.client.phone}
-                      onChange={() => setIndividualRecipient(currentContactDoc?.client.phone || '')}
-                      className="form-radio"
-                    />
-                    <Label htmlFor="useExistingNumber">Enviar para o número utilizado no momento da emissão</Label>
-                  </div>
-                )}
-
-                {(individualSendType === 'whatsapp' || individualSendType === 'sms') && (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="enterNewNumber"
-                      name="recipientOption"
-                      value="new"
-                      checked={individualRecipient !== currentContactDoc?.client.phone}
-                      onChange={() => setIndividualRecipient('')} // Limpar para digitar novo
-                      className="form-radio"
-                    />
-                    <Label htmlFor="enterNewNumber">Enviar para um novo número</Label>
-                    {individualRecipient !== currentContactDoc?.client.phone && (
-                      <Input
-                        type="tel"
-                        placeholder="Digite o novo número"
-                        value={individualRecipient}
-                        onChange={(e) => setIndividualRecipient(e.target.value)}
-                        className="flex-1"
-                      />
-                    )}
-                  </div>
-                )}
 
                 <div>
                   <Label>Mensagem</Label>
@@ -596,7 +714,7 @@ export default function CobrancasPage() {
                 </Button>
                 <Button onClick={handleIndividualSendMessage} className="flex items-center gap-2">
                   <Send className="w-4 h-4" />
-                  {individualSendType === 'email' ? 'Enviar E-mail' : individualSendType === 'whatsapp' ? 'Enviar WhatsApp' : 'Enviar SMS'}
+                  {individualSendType === 'email' ? 'Enviar E-mail' : 'Enviar WhatsApp'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -608,64 +726,34 @@ export default function CobrancasPage() {
               <DialogHeader>
                 <DialogTitle>Dados da Cobrança</DialogTitle>
                 <DialogDescription>
-                  Log de atividades para a cobrança {currentLogDoc?.documentNumber}
+                  Detalhes da cobrança {currentLogDoc?.documento_loja}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p><strong>Cobrança:</strong> {currentLogDoc?.documentNumber}</p>
-                  <p><strong>Cliente:</strong> {currentLogDoc?.client.name}</p>
-                  <p><strong>Telefone:</strong> {currentLogDoc?.client.phone}</p>
-                  <p><strong>Tipo:</strong> PIX | BOLETO | CARTEIRA</p>
-                  <p>PIX copia e cola &gt;&gt; ou</p>
-                  <p>link de download do boleto &gt;&gt; ou</p>
-                  <p>Carteira: documento / parcela</p>
+                  <p><strong>Documento:</strong> {safeToString(currentLogDoc?.documento_loja)}</p>
+                  <p><strong>Cliente:</strong> {safeToString(currentLogDoc?.nome_cliente)}</p>
+                  <p><strong>Telefone:</strong> {safeToString(currentLogDoc?.telefone_cliente)}</p>
+                  {currentLogDoc?.brcode && (
+                    <div className="mt-2">
+                      <p><strong>PIX Copia e Cola:</strong></p>
+                      <div className="p-2 bg-gray-100 rounded text-xs font-mono break-all">
+                        {currentLogDoc.brcode}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
-                  <p><strong>R$:</strong> {formatCurrency(currentLogDoc?.total || 0)}</p>
-                  <p><strong>CNPJ/CPF:</strong> {currentLogDoc?.client.cpfCnpj}</p>
-                  <p><strong>E-mail:</strong> {currentLogDoc?.client.email}</p>
+                  <p><strong>Valor:</strong> {formatCurrency(parseFloat(safeToString(currentLogDoc?.valor)) || 0)}</p>
+                  <p><strong>Juros:</strong> {formatCurrency(parseFloat(safeToString(currentLogDoc?.juros)) || 0)}</p>
+                  <p><strong>Pendente:</strong> {formatCurrency(parseFloat(safeToString(currentLogDoc?.valor_pendente)) || 0)}</p>
+                  <p><strong>Status:</strong> {safeToString(currentLogDoc?.desc_status)}</p>
+                  <p><strong>Vencimento:</strong> {formatDateToBR(safeToString(currentLogDoc?.vencimento))}</p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Histórico de Envio</h3>
-                <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data hora</TableHead>
-                        <TableHead>Ação</TableHead>
-                        <TableHead>Agente</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {/* Mock data for log entries - replace with actual data from currentLogDoc if available */}
-                      <TableRow>
-                        <TableCell>24/01/2024 - 07:15</TableCell>
-                        <TableCell>Enviado e-mail para xxx@provedor.com</TableCell>
-                        <TableCell>auto</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>20/01/2024 - 05:15</TableCell>
-                        <TableCell>Enviado e-mail para xxx@provedor.com</TableCell>
-                        <TableCell>joana</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>19/01/2024 - 09:15</TableCell>
-                        <TableCell>Enviado whats para 55 45 9 9955 5555</TableCell>
-                        <TableCell>auto</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>17/01/2024 - 08:15</TableCell>
-                        <TableCell>Enviado whats para 55 45 9 9955 5555</TableCell>
-                        <TableCell>maria</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-
                 <h3 className="text-lg font-semibold">Anotações</h3>
                 <textarea
                   className="w-full p-2 border rounded min-h-[100px]"
@@ -697,13 +785,11 @@ export default function CobrancasPage() {
               </DialogHeader>
               
               <div className="max-h-60 overflow-y-auto space-y-2 py-4">
-                {selectedDocumentsList.map((doc) => (
-                  <div key={doc.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span className="font-medium">{doc.client.name}</span>
+                {selectedCobrancasList.map((cobranca) => (
+                  <div key={cobranca.id_cobranca} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <span className="font-medium">{safeToString(cobranca.nome_cliente)}</span>
                     <span className="text-sm text-gray-600">
-                      {sendType === 'email' 
-                        ? doc.client.email 
-                        : doc.client.phone}
+                      {safeToString(cobranca.telefone_cliente)}
                     </span>
                   </div>
                 ))}

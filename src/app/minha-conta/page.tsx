@@ -388,42 +388,6 @@ export default function MinhaContaPage() {
                   </Button>
                 </CardContent>
               </Card>
-
-              {/* Sessões Ativas */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sessões Ativas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Sessão Atual</p>
-                        <p className="text-sm text-gray-600">Chrome • São Paulo, SP</p>
-                        <p className="text-xs text-gray-500">Última atividade: agora</p>
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                        Ativa
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Mobile App</p>
-                        <p className="text-sm text-gray-600">iPhone • São Paulo, SP</p>
-                        <p className="text-xs text-gray-500">Última atividade: 2 horas atrás</p>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        Encerrar
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button variant="destructive" size="sm">
-                    Encerrar Todas as Outras Sessões
-                  </Button>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </div>

@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     setLoading(true);
-    // Simular carregamento
+    
     await new Promise(resolve => setTimeout(resolve, 1000));
     setMetrics(mockDashboardMetrics);
     setLoading(false);
@@ -33,26 +33,17 @@ export default function DashboardPage() {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="space-y-6">
-          {/* Header */}
+          
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
               <p className="text-gray-600">Situação atual do contas a receber</p>
             </div>
-            <Button
-              onClick={handleRefresh}
-              disabled={loading}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
           </div>
 
-          {/* Métricas por período de vencimento */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Vencidos */}
-            <Card className="border-l-4 border-l-red-500 bg-red-50">
+            
+            <Card className="border-l-4 border-l-red-500 bg-red-50 hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-red-700">
                   Hoje
@@ -71,8 +62,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* A vencer em até 2 dias */}
-            <Card className="border-l-4 border-l-orange-500 bg-orange-50">
+            <Card className="border-l-4 border-l-orange-500 bg-orange-50 hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-orange-700">
                   a vencer em até 2 dias
@@ -91,8 +81,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* A vencer de 3 até 10 dias */}
-            <Card className="border-l-4 border-l-yellow-500 bg-yellow-50">
+            <Card className="border-l-4 border-l-yellow-500 bg-yellow-50 hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-yellow-700">
                   a vencer de 3 até 10 dias
@@ -111,8 +100,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            {/* A vencer acima de 10 dias */}
-            <Card className="border-l-4 border-l-green-500 bg-green-50">
+            <Card className="border-l-4 border-l-green-500 bg-green-50 hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-green-700">
                   a vencer acima de 10 dias
@@ -132,10 +120,9 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* Resumos adicionais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Total vencido */}
-            <Card className="bg-red-500 text-white">
+
+            <Card className="bg-red-500 text-white hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium opacity-90">
                   Total vencido
@@ -155,7 +142,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Total vencendo hoje */}
-            <Card className="bg-orange-500 text-white">
+            <Card className="bg-orange-500 text-white hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium opacity-90">
                   Total vencendo HOJE
@@ -175,7 +162,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Total a vencer */}
-            <Card className="bg-blue-500 text-white">
+            <Card className="bg-blue-500 text-white hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium opacity-90">
                   Total a vencer
@@ -195,7 +182,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Total geral a receber */}
-            <Card className="bg-green-500 text-white">
+            <Card className="bg-green-500 text-white hover:translate-2 duration-250 cursor-pointer">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium opacity-90">
                   Total geral a receber
@@ -217,7 +204,7 @@ export default function DashboardPage() {
 
           {/* Cards de resumo por período específico */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border border-red-200">
+            <Card className="border border-red-200 hover:translate-2 duration-250 cursor-pointer">
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="text-sm text-gray-600">vencidos até 2 dias</div>
@@ -235,7 +222,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-orange-200">
+            <Card className="border border-orange-200 hover:translate-2 duration-250 cursor-pointer">
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="text-sm text-gray-600">vencidos entre 3 e 10 dias</div>
@@ -253,7 +240,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-yellow-200">
+            <Card className="border border-yellow-200 hover:translate-2 duration-250 cursor-pointer">
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="text-sm text-gray-600">vencidos entre 11 e 30 dias</div>
@@ -271,7 +258,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-gray-200">
+            <Card className="border border-gray-200 hover:translate-2 duration-250 cursor-pointer">
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="text-sm text-gray-600">vencidos a mais de 30 dias</div>

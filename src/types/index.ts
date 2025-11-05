@@ -37,7 +37,7 @@ export interface RegisterCredentials {
   celular?: string;
   data_nascimento?: string;
   gid_empresa?: number;
-  cnpj_empresa?: string;
+  empresa_cnpj?: string;
 }
 
 // Tipo para o contexto de usuário (simplificado)
@@ -46,8 +46,8 @@ export interface User {
   name: string;
   email: string;
   company?: {
-    name: string;
-    cnpj: string;
+    empresa_nome: string;
+    empresa_cnpj: string;
   };
 }
 
@@ -59,8 +59,8 @@ export interface AuthResponse {
     nome: string;
     email: string;
     empresa?: {
-      nome_empresa: string;
-      cnpj_empresa: string;
+      empresa_nome: string;
+      empresa_cnpj: string;
     };
   };
 }

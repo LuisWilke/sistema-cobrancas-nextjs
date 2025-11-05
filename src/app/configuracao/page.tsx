@@ -35,6 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import Link from 'next/link';
 
 export default function ConfiguracaoPage() {
   const [open, setOpen] = React.useState(false)
@@ -708,6 +709,9 @@ export default function ConfiguracaoPage() {
                     <Save className="w-4 h-4 mr-2" />
                     Salvar Informações da Empresa
                   </Button>
+                <Button className="mt-2 bg-red-600 hover:bg-red-700 border-red-700 hover:border-red-800 text-white flex items-center " size="sm">
+                  <Link href="/userlist">Gerenciar usuarios</Link>
+                </Button>
                 </CardContent>
               </Card>
             </TabsContent>

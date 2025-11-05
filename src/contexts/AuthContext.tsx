@@ -38,7 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: response.usuario.id.toString(),
           name: response.usuario.nome,
           email: response.usuario.email,
-          company: response.usuario.empresa ? { name: response.usuario.empresa.nome_empresa, cnpj: response.usuario.empresa.cnpj_empresa } : undefined,
+          company: {
+            empresa_nome: response.usuario.empresa_nome,
+            empresa_cnpj: response.usuario.empresa_cnpj,
+          },
         });
       } else {
         localStorage.removeItem('token');
@@ -63,7 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: response.usuario.id.toString(),
         name: response.usuario.nome,
         email: response.usuario.email,
-        company: response.usuario.empresa ? { name: response.usuario.empresa.nome_empresa, cnpj: response.usuario.empresa.cnpj_empresa } : undefined,
+        company: {
+          empresa_nome: response.empresa.nome,
+          empresa_cnpj: response.empresa.cnpj,
+        },
       };
       
       setUser(userData);
@@ -90,15 +96,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.register(userData);
       
-      const user: User = {
+      const newUser: User = {
         id: response.usuario.id.toString(),
         name: response.usuario.nome,
         email: response.usuario.email,
       };
       
-      setUser(user);
+      setUser(newUser);
       localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(newUser));
       
       setLoading(false);
       return true;

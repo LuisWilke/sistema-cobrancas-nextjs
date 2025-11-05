@@ -130,7 +130,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 Olá, {user?.name}
               </h2>
               <p className="text-sm text-gray-600">
-                Empresa Logada: {user?.company?.name || 'N/A'} - {user?.company?.cnpj || 'N/A'}
+                Empresa Logada: {user?.company?.empresa_nome || 'N/A'} - {user?.company?.empresa_cnpj || 'N/A'}
               </p>
             </div>
           </div>
@@ -157,7 +157,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Avatar>
           </div>
         </header>
-
         {/* Page content */}
         <main className="p-4 lg:p-6">
           {children}

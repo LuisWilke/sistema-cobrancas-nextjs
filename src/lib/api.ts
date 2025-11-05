@@ -1,6 +1,7 @@
 // Biblioteca para comunicação com a API do backend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
+//const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://rdc1.painel.chatm2.com.br';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -59,6 +60,7 @@ export const api = {
   // Autenticação
   login: async (credentials: { email: string; senha: string }) => {
     return apiRequest<{
+      empresa: any;
       mensagem: string;
       token: string;
       usuario: {
@@ -105,6 +107,8 @@ export const api = {
     return apiRequest<{
       valido: boolean;
       usuario: {
+        empresa_cnpj: string;
+        empresa_nome: string;
         id: number;
         nome: string;
         email: string;

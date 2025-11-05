@@ -108,10 +108,12 @@ export default function GestaoPixPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+
+
               <div className="flex flex-col sm:flex-row gap-2 items-end">
                 <div className="relative flex-1">
                   <Label htmlFor="search-client-document" className='mb-2'>Cliente ou Documento</Label>
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 mt-2" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/3 text-gray-400 w-3 h-4 mt-2.5" />
                   <Input
                     id="search-client-document"
                     placeholder="Buscar por cliente ou documento..."
@@ -120,14 +122,7 @@ export default function GestaoPixPage() {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex items-center space-x-2 mb-2.5">
-                  <Checkbox
-                    id="onlyPending"
-                    checked={onlyPending}
-                    onCheckedChange={(checked: boolean) => setOnlyPending(checked)}
-                  />
-                  <Label htmlFor="onlyPending">Somente pendentes</Label>
-                </div>
+
                 <div className="flex items-center gap-2">
                   <Label htmlFor="start-date">Vencimento - Início:</Label>
                   <Input type="date" id="start-date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-auto" />
@@ -136,6 +131,15 @@ export default function GestaoPixPage() {
                 </div>
                 <Button variant="outline">Pesquisar</Button>
               </div>
+
+                <div className="flex items-center space-x-3 mb-2">
+                  <Checkbox
+                    id="onlyPending"
+                    checked={onlyPending}
+                    onCheckedChange={(checked: boolean) => setOnlyPending(checked)}
+                  />
+                  <Label htmlFor="onlyPending">Somente pendentes</Label>
+                </div>
             </CardContent>
           </Card>
 

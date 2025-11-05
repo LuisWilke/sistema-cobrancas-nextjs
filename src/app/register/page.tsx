@@ -76,6 +76,28 @@ export default function RegisterPage() {
     if (error) setError('')
   }
 
+  function formatCpf(value: string) {
+  return value
+    .replace(/\D/g, '')                         
+    .replace(/(\d{3})(\d)/, '$1.$2')            
+    .replace(/(\d{3})(\d)/, '$1.$2')            
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');     
+}
+
+function formatPhone(value: string) {
+  value = value.replace(/\D/g, '');
+
+  value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+
+  if (value.length >= 10) {
+    value = value.replace(/(\d{5})(\d{4})$/, '$1-$2');
+  } else {
+    value = value.replace(/(\d{4})(\d{4})$/, '$1-$2');
+  }
+
+  return value;
+}
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
@@ -157,7 +179,7 @@ export default function RegisterPage() {
                     type="text"
                     placeholder="000.000.000-00"
                     value={formData.cpf_usuario}
-                    onChange={(e) => handleInputChange('cpf_usuario', e.target.value)}
+                    onChange={(e) => handleInputChange('cpf_usuario', formatCpf(e.target.value))}
                   />
                 </div>
 
@@ -170,7 +192,7 @@ export default function RegisterPage() {
                     type="text"
                     placeholder="(11) 99999-9999"
                     value={formData.celular}
-                    onChange={(e) => handleInputChange('celular', e.target.value)}
+                    onChange={(e) => handleInputChange('celular', formatPhone(e.target.value))}
                   />
                 </div>
 

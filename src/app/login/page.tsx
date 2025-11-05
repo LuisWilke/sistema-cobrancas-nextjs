@@ -13,7 +13,8 @@ import Link from 'next/link';
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
-    senha: ''
+    senha: '',
+    cnpj: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -119,6 +120,19 @@ export default function LoginPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="cnpj" className="text-sm font-medium">
+                    CNPJ
+                  </Label>
+                  <Input
+                    id="cnpj"
+                    placeholder="CNPJ da empresa"
+                    value={formData.cnpj}
+                    onChange={(e) => handleInputChange('cnpj', e.target.value)}
+                    required
+                  />
+                </div>
+
                 {error && (
                   <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
                     {error}
@@ -126,8 +140,8 @@ export default function LoginPage() {
                 )}
 
                 <div className="text-center">
-                  <Link 
-                    href="/reset-password" 
+                  <Link
+                    href="/reset-password"
                     className="text-sm font-bold text-orange-600 hover:text-orange-600 underline"
                   >
                     Esqueci minha senha
@@ -145,8 +159,8 @@ export default function LoginPage() {
                 <div className="text-center">
                   <span className="text-sm text-gray-600">
                     Não tem uma conta?{' '}
-                    <Link 
-                      href="/register" 
+                    <Link
+                      href="/register"
                       className="font-bold text-blue-600 hover:text-blue-700 underline"
                     >
                       Criar conta
@@ -161,4 +175,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
