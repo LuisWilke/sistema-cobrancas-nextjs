@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -18,8 +19,6 @@ import {
   MessageCircle,
   Phone,
   Eye,
-  CheckSquare,
-  Square,
   Calendar,
   Filter,
   X,
@@ -553,13 +552,10 @@ export default function CobrancasPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
-                        <Button variant="ghost" size="sm" onClick={handleSelectAll} className="p-0">
-                          {selectedDocuments.length === cobrancas.length && cobrancas.length > 0 ? (
-                            <CheckSquare className="w-4 h-4" />
-                          ) : (
-                            <Square className="w-4 h-4" />
-                          )}
-                        </Button>
+                        <Checkbox
+                          checked={selectedDocuments.length === cobrancas.length && cobrancas.length > 0}
+                          onCheckedChange={handleSelectAll}
+                        />
                       </TableHead>
                       <TableHead>Código</TableHead>
                       <TableHead>Cliente</TableHead>
@@ -578,18 +574,10 @@ export default function CobrancasPage() {
                     {cobrancas.map((cobranca) => (
                       <TableRow key={cobranca.id_cobranca}>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleSelectDocument(safeToString(cobranca.id_cobranca))}
-                            className="p-0"
-                          >
-                            {selectedDocuments.includes(safeToString(cobranca.id_cobranca)) ? (
-                              <CheckSquare className="w-4 h-4 text-blue-600" />
-                            ) : (
-                              <Square className="w-4 h-4" />
-                            )}
-                          </Button>
+                          <Checkbox
+                            checked={selectedDocuments.includes(safeToString(cobranca.id_cobranca))}
+                            onCheckedChange={() => handleSelectDocument(safeToString(cobranca.id_cobranca))}
+                          />
                         </TableCell>
                         <TableCell className="font-medium">{safeToString(cobranca.codigo_cliente)}</TableCell>
                         <TableCell className="font-medium">{safeToString(cobranca.nome_cliente)}</TableCell>
