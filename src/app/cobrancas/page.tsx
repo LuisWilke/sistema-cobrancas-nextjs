@@ -576,7 +576,7 @@ export default function CobrancasPage() {
                         <TableCell>{safeToString(cobranca.parcela_loja)}</TableCell>
                         <TableCell>{formatDateToBR(cobranca.emissao)}</TableCell>
                         <TableCell>{formatDateToBR(cobranca.vencimento)}</TableCell>
-                        <TableCell>{formatCurrency(parseFloat(safeToString(cobranca.valor)) || 0)}</TableCell>
+                        <TableCell>{formatCurrency(parseFloat(safeToString(cobranca.valor_pago)) || 0)}</TableCell>
                         <TableCell>{formatCurrency(parseFloat(safeToString(cobranca.juros)) || 0)}</TableCell>
                         <TableCell className="font-medium">{formatCurrency(parseFloat(safeToString(cobranca.valor_pendente)) || 0)}</TableCell>
                         <TableCell>
